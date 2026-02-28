@@ -6,25 +6,20 @@
     --w: #ff4b2b;
     --mute: #f39c12;
     --exile: #8e44ad;
-    --cupid: #ff69b4;
 }
-body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 10px; display: flex; justify-content: center; transition: 0.5s; }
+body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 10px; display: flex; justify-content: center; }
 body.night { background: #0a0a2e; }
 body.day { background: #4a3300; }
 body.vote { background: #3d0000; }
 .container { width: 100%; max-width: 600px; }
-.card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; margin-bottom: 15px; }
+.card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .hidden { display: none !important; }
-input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252535; color: white; box-sizing: border-box; }
-button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 5px 0; font-family: 'Kanit'; }
+button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin: 5px 0; }
 .btn-main { background: var(--primary); color: white; }
-.role-group-header { background: rgba(255,255,255,0.05); padding: 8px 15px; margin-top: 15px; font-size: 0.9em; font-weight: bold; border-radius: 8px; border-left: 4px solid #fff; }
-.group-human { border-left-color: var(--v); color: var(--v); }
-.group-wolf { border-left-color: var(--w); color: var(--w); }
-.group-other { border-left-color: #b06ab3; color: #b06ab3; }
-.role-item { display: flex; padding: 12px; border-bottom: 1px solid #222; cursor: pointer; }
-.role-item.selected { background: rgba(255, 46, 99, 0.2); border-radius: 10px; }
-.role-top { display: flex; justify-content: space-between; width: 100%; font-weight: bold; }
+.role-group-header { padding: 10px; margin-top: 15px; border-radius: 8px; font-weight: bold; font-size: 0.9em; background: rgba(255,255,255,0.05); }
+.group-human { color: var(--v); border-left: 4px solid var(--v); }
+.group-wolf { color: var(--w); border-left: 4px solid var(--w); }
+.group-other { color: #b06ab3; border-left: 4px solid #b06ab3; }
+.role-item { padding: 12px; border-bottom: 1px solid #222; cursor: pointer; display: flex; justify-content: space-between; }
+.role-item.selected { background: rgba(255, 46, 99, 0.2); border-radius: 8px; }
 .p-plus { color: var(--v); } .p-minus { color: var(--w); }
-.player-badge { background: #252535; padding: 6px 12px; border-radius: 8px; margin: 4px; display: inline-block; border: 1px solid #444; }
-.phase-banner { text-align: center; font-weight: bold; padding: 15px; border-radius: 12px; margin-bottom: 15px; color: white; }
