@@ -396,25 +396,59 @@
         });
     }
 
-    function renderRoleSelector(savedRoleIds = []) {
+        function renderRoleSelector(savedRoleIds = []) {
         const container = document.getElementById('role-selector');
-        if(container.innerHTML !== "") return;
+        
+        // ล้างข้อมูลเก่าออกก่อน เพื่อป้องกันการเขียนซ้ำซ้อน
+        container.innerHTML = ""; 
         selectedRoles = [];
-        rolesData.forEach(r => {
-            const div = document.createElement('div');
-            div.className = 'role-item' + (savedRoleIds.includes(r.id) ? ' selected' : '');
-            if(savedRoleIds.includes(r.id)) selectedRoles.push(r);
-            div.innerHTML = `<span>${r.name}</span><span class="${r.p<0?'p-minus':'p-plus'}">${r.p>0?'+'+r.p:r.p}</span>`;
-            div.onclick = () => {
-                div.classList.toggle('selected');
-                const idx = selectedRoles.indexOf(r);
-                if(idx > -1) selectedRoles.splice(idx, 1); else selectedRoles.push(r);
-                updateSetupUI();
-            };
-            container.appendChild(div);
+        
+        // นิยามกลุ่มบทบาท
+        const groups = [
+            { id: 'human', label: '🛡️ ฝ่ายชาวบ้าน', class: 'group-human' },
+            { id: 'wolf', label: '🐺 ฝ่ายหมาป่า', class: 'group-wolf' },
+            { id: 'other', label: '🔮 ฝ่ายอิสระ', class: 'group-other' }
+        ];
+
+        // วนลูปสร้างหัวข้อกลุ่ม และใส่บทบาทลงไปตามกลุ่มนั้นๆ
+        groups.forEach(group => {
+            // 1. สร้างหัวข้อกลุ่ม (🛡️, 🐺, 🔮)
+            const header = document.createElement('div');
+            header.className = `role-group-header ${group.class}`;
+            header.innerText = group.label;
+            container.appendChild(header);
+
+            // 2. กรองบทบาทที่อยู่ในกลุ่มนี้มาแสดง
+            rolesData.filter(r => r.team === group.id).forEach(r => {
+                const div = document.createElement('div');
+                // เช็คว่าบทบาทนี้เคยเลือกไว้ไหม (จากตาที่แล้ว)
+                const isSelected = savedRoleIds.includes(r.id);
+                
+                div.className = 'role-item' + (isSelected ? ' selected' : '');
+                if(isSelected) selectedRoles.push(r);
+                
+                div.innerHTML = `
+                    <span>${r.name} <small style="opacity:0.6">(${r.en})</small></span>
+                    <span class="${r.p < 0 ? 'p-minus' : 'p-plus'}">${r.p > 0 ? '+' + r.p : r.p}</span>
+                `;
+                
+                div.onclick = () => {
+                    div.classList.toggle('selected');
+                    const idx = selectedRoles.indexOf(r);
+                    if(idx > -1) {
+                        selectedRoles.splice(idx, 1);
+                    } else {
+                        selectedRoles.push(r);
+                    }
+                    updateSetupUI();
+                };
+                container.appendChild(div);
+            });
         });
-        updateSetupUI();
+        
+        updateSetupUI(); // อัปเดตตัวเลขจำนวนบทบาทและแต้มทันที
     }
+
 
     function updateSetupUI() {
         document.getElementById('count-sel').innerText = selectedRoles.length;
