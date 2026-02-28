@@ -2,184 +2,74 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WEREWOLF GM-EDITION 🐺</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #2c3e50; --accent: #e74c3c; --bg: #0f0f0f; --card-bg: #1a1a1a; --night: #1e3799; --day: #f39c12; --gm-color: #8e44ad; }
-        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #ecf0f1; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: var(--card-bg); padding: 2rem; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.7); width: 90%; max-width: 400px; text-align: center; border: 1px solid #333; }
-        .hidden { display: none !important; }
-        input, select { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid #333; border-radius: 10px; background: #252525; color: white; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        .btn-main { background: var(--accent); color: white; }
-        .btn-outline { background: transparent; border: 2px solid #444; color: #bbb; }
-        .btn-gm { background: var(--gm-color); color: white; }
-        .room-code-display { font-size: 2.5rem; font-weight: bold; letter-spacing: 8px; color: var(--accent); margin: 10px 0; display: block; }
-        .badge { background: #333; padding: 6px 14px; border-radius: 20px; font-size: 14px; margin: 4px; display: inline-block; border: 1px solid #444; }
-        .phase-banner { font-size: 1.3rem; font-weight: bold; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .night { background: var(--night); } .day { background: var(--day); color: #000; } .vote { background: var(--accent); }
-        .gm-panel { background: #2c3e50; padding: 12px; border-radius: 10px; text-align: left; font-size: 14px; margin-top: 15px; border-left: 5px solid var(--gm-color); }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Werewolf GM Master Tool</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="card">
-    <div id="screen-home">
-        <h1 style="color: var(--accent); margin-bottom: 0;">WEREWOLF</h1>
-        <p style="color: #666; font-size: 12px; margin-top: 5px;">GM EDITION (ID: fir-77b01)</p>
-        <input type="text" id="in-username" placeholder="ใส่ชื่อของคุณ">
-        <input type="text" id="in-roomcode" placeholder="รหัสห้อง 4 หลัก">
-        <button class="btn-main" id="btn-create">สร้างห้อง (HOST)</button>
-        <button class="btn-outline" id="btn-join">เข้าห้อง (JOIN)</button>
+<div class="container">
+    <h1>🐺 WEREWOLF GM TOOL</h1>
+
+    <div id="setup-section" class="card">
+        <section>
+            <h3>1. รายชื่อผู้เล่น</h3>
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="ชื่อผู้เล่น">
+                <button class="add-btn" onclick="addPlayerToSetup()">➕ เพิ่ม</button>
+            </div>
+            <div id="setupPlayerList" class="badge-container"></div>
+        </section>
+
+        <section>
+            <div class="role-header">
+                <h3>2. เลือกบทบาทในเกม</h3>
+                <div id="balanceScore" class="score-badge">แต้มรวม: 0</div>
+            </div>
+            <p style="font-size: 0.8em; color: #888; margin-bottom: 10px;">*แต้มบวก = มนุษย์ได้เปรียบ / แต้มลบ = หมาป่าได้เปรียบ</p>
+            <div id="roleSelection" class="role-list">
+                </div>
+        </section>
+
+        <button class="start-btn" onclick="startGame()">🏁 เริ่มคุมเกม</button>
     </div>
 
-    <div id="screen-lobby" class="hidden">
-        <p>รหัสเข้าห้อง</p>
-        <span class="room-code-display" id="out-roomcode">----</span>
-        <div id="out-players" style="margin: 15px 0;"></div>
-        <div id="host-ui" class="hidden">
-            <p style="color: var(--gm-color);">เลือก GM ของเกมนี้</p>
-            <select id="select-gm"></select>
-            <button class="btn-main" id="btn-start" style="background: #27ae60;">เริ่มเกม</button>
+    <div id="game-section" class="hidden">
+        <div class="stats-bar">
+            <div class="stat-item">👥 ทั้งหมด: <span id="totalCount">0</span></div>
+            <div class="stat-item alive">🟢 รอด: <span id="aliveCount">0</span></div>
+            <div class="stat-item dead">💀 ตาย: <span id="deadCount">0</span></div>
+            <div class="stat-item cult">👁️ ลัทธิ: <span id="cultCount">0</span></div>
         </div>
-        <p id="wait-text">⏳ รอโฮสต์เริ่มเกม...</p>
-    </div>
 
-    <div id="screen-game" class="hidden">
-        <div id="game-phase" class="phase-banner">ช่วงเวลากลางคืน 🌙</div>
-        <div style="background: #252525; padding: 20px; border-radius: 15px; border: 1px solid #333;">
-            <p style="margin:0; color: #777;">บทบาทของคุณ</p>
-            <h2 id="out-role">...</h2>
-            <p id="out-desc" style="color: #aaa; font-size: 14px;"></p>
+        <div class="event-control card">
+            <button class="roll-btn" onclick="rollEvent()">🎲 สุ่มเหตุการณ์ประจำวัน</button>
+            <div id="eventDisplay" class="hidden">
+                <span id="diceResult" class="dice-num">?</span>
+                <p id="eventDesc"></p>
+            </div>
         </div>
-        <div id="gm-ui" class="hidden">
-            <div class="gm-panel" id="gm-data-list"></div>
-            <button class="btn-gm" id="btn-next-phase" style="margin-top: 15px;">เปลี่ยนช่วงเวลา ➡️</button>
-            <button class="btn-outline" id="btn-end" style="margin-top: 10px;">จบเกม / กลับ Lobby</button>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ชื่อ</th>
+                        <th>บทบาท</th>
+                        <th>❤️ คู่รัก</th>
+                        <th>👁️ ลัทธิ</th>
+                        <th>🛡️ ป้องกัน</th>
+                        <th>⚙️ สถานะ</th>
+                        <th>ลบ</th>
+                    </tr>
+                </thead>
+                <tbody id="gamePlayerTable"></tbody>
+            </table>
         </div>
+        <button class="reset-btn" onclick="location.reload()">🔄 รีเซ็ตเกมใหม่</button>
     </div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-    // --- แก้ไขจุดนี้: ใส่ URL ของ Realtime Database คุณลงไป ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo",
-        authDomain: "fir-77b01.firebaseapp.com",
-        projectId: "fir-77b01",
-        storageBucket: "fir-77b01.firebasestorage.app",
-        messagingSenderId: "364738165804",
-        appId: "1:364738165804:web:248db4d4a74e146999e589",
-        databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app/" 
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    let myName = "", currentRoom = "", isHost = false, players = [];
-
-    const show = (id) => {
-        document.querySelectorAll('.card > div').forEach(d => d.classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-    };
-
-    // สร้างห้อง
-    document.getElementById('btn-create').onclick = async () => {
-        myName = document.getElementById('in-username').value.trim();
-        if (!myName) return alert("ใส่ชื่อด้วยครับ");
-        isHost = true;
-        currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
-        
-        try {
-            await set(ref(db, 'rooms/' + currentRoom), {
-                status: 'waiting', host: myName, players: { [myName]: true }, phase: 0
-            });
-            listenRoom();
-        } catch(e) { alert("สร้างห้องไม่ได้! เช็ค Rules ใน Firebase หรือยัง?"); }
-    };
-
-    // เข้าห้อง
-    document.getElementById('btn-join').onclick = async () => {
-        myName = document.getElementById('in-username').value.trim();
-        currentRoom = document.getElementById('in-roomcode').value.trim();
-        if (!myName || currentRoom.length < 4) return alert("ข้อมูลไม่ครบ");
-        
-        try {
-            await update(ref(db, `rooms/${currentRoom}/players`), { [myName]: true });
-            listenRoom();
-        } catch(e) { alert("เข้าห้องไม่ได้! รหัสห้องผิดหรือเน็ตหลุด"); }
-    };
-
-    function listenRoom() {
-        onValue(ref(db, 'rooms/' + currentRoom), (snap) => {
-            const data = snap.val();
-            if (!data) return;
-            players = data.players ? Object.keys(data.players) : [];
-            document.getElementById('out-roomcode').innerText = currentRoom;
-            document.getElementById('out-players').innerHTML = players.map(p => `<span class="badge">${p}</span>`).join('');
-            
-            if (isHost) {
-                document.getElementById('host-ui').classList.remove('hidden');
-                document.getElementById('wait-text').classList.add('hidden');
-                const sel = document.getElementById('select-gm');
-                sel.innerHTML = players.map(p => `<option value="${p}">${p}</option>`).join('');
-            }
-            if (data.status === 'playing') renderGame(data);
-            else show('screen-lobby');
-        });
-        onDisconnect(ref(db, `rooms/${currentRoom}/players/${myName}`)).remove();
-    }
-
-    document.getElementById('btn-start').onclick = () => {
-        const gm = document.getElementById('select-gm').value;
-        const others = players.filter(p => p !== gm);
-        if (others.length < 2) return alert("ต้องการผู้เล่นอย่างน้อย 2 คน (ไม่รวม GM)");
-        
-        let roles = { [gm]: "GM" };
-        let shuffle = [...others].sort(() => Math.random() - 0.5);
-        roles[shuffle[0]] = "WEREWOLF";
-        roles[shuffle[1]] = "SEER";
-        for(let i=2; i<shuffle.length; i++) roles[shuffle[i]] = "VILLAGER";
-
-        update(ref(db, 'rooms/' + currentRoom), { status: 'playing', roles: roles, phase: 0, gm: gm });
-    };
-
-    function renderGame(data) {
-        show('screen-game');
-        const role = data.roles[myName];
-        const phaseEl = document.getElementById('game-phase');
-        const roleEl = document.getElementById('out-role');
-        const descEl = document.getElementById('out-desc');
-
-        if (role === "GM") {
-            roleEl.innerText = "Game Master 🎙️"; roleEl.style.color = "var(--gm-color)";
-            descEl.innerText = "คุณคุมเกม ดูบทบาททุกคนได้ที่ข้างล่างนี้";
-            document.getElementById('gm-ui').classList.remove('hidden');
-            let info = ""; for(let p in data.roles) if(p !== myName) info += `• ${p}: <b>${data.roles[p]}</b><br>`;
-            document.getElementById('gm-data-list').innerHTML = info;
-        } else {
-            roleEl.innerText = role === "WEREWOLF" ? "หมาป่า 🐺" : (role === "SEER" ? "นักพยากรณ์ 🔮" : "ชาวบ้าน 👨‍🌾");
-            roleEl.style.color = role === "WEREWOLF" ? "var(--accent)" : (role === "SEER" ? "#3498db" : "#777");
-            descEl.innerText = "รอฟังคำสั่งจาก GM เพื่อดำเนินการต่อ";
-            document.getElementById('gm-ui').classList.add('hidden');
-        }
-
-        const phs = [{n:"กลางคืน 🌙",c:"night"}, {n:"ตอนเช้า ☀️",c:"day"}, {n:"โหวต ⚖️",c:"vote"}];
-        phaseEl.innerText = phs[data.phase].n; phaseEl.className = "phase-banner " + phs[data.phase].c;
-    }
-
-    document.getElementById('btn-next-phase').onclick = () => {
-        onValue(ref(db, `rooms/${currentRoom}/phase`), (s) => {
-            update(ref(db, `rooms/${currentRoom}`), { phase: (s.val() + 1) % 3 });
-        }, { onlyOnce: true });
-    };
-
-    document.getElementById('btn-end').onclick = () => {
-        if(confirm("จบเกม?")) update(ref(db, 'rooms/' + currentRoom), { status: 'waiting' });
-    };
-</script>
+<script src="script.js"></script>
 </body>
 </html>
