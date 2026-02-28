@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WEREWOLF ONLINE PRO</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -255,6 +255,16 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    function resetMobileZoom() {
+    // รีเซ็ต viewport กลับมาเป็นค่าเริ่มต้น 1.0
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+    }
+}
+
+    
+
     let myName = "", currentRoom = "", players = [], selectedRoles = [];
 
     document.getElementById('btn-create').onclick = async () => {
@@ -276,6 +286,7 @@
     };
 
     function initLobby() {
+        resetMobileZoom(); // เพิ่มตรงนี้
         document.getElementById('screen-auth').classList.add('hidden');
         document.getElementById('screen-lobby').classList.remove('hidden');
         document.getElementById('display-room').innerText = currentRoom;
@@ -362,6 +373,7 @@
     };
 
     function renderGame(data) {
+        resetMobileZoom(); // เพิ่มตรงนี้
         document.getElementById('screen-lobby').classList.add('hidden');
         document.getElementById('screen-game').classList.remove('hidden');
         
