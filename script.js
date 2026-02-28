@@ -3,20 +3,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, set, onValue, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // ... [Firebase Config เดิมของคุณ] ...
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo",
-  authDomain: "fir-77b01.firebaseapp.com",
-  databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "fir-77b01",
-  storageBucket: "fir-77b01.firebasestorage.app",
-  messagingSenderId: "364738165804",
-  appId: "1:364738165804:web:248db4d4a74e146999e589",
-  measurementId: "G-381MWEWJ9F"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
 
 let myName = "", currentRoom = "", players = [], selectedRoles = [];
 
