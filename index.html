@@ -81,6 +81,37 @@
             right: 20px;
         }
 
+        /* Dice Animation Style */
+        #dice-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .dice-box {
+            font-size: 80px;
+            background: white;
+            color: black;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            margin: 10px;
+            box-shadow: 0 0 20px var(--guide);
+        }
+        .dice-rolling { animation: dice-shake 0.1s infinite; }
+        @keyframes dice-shake {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            50% { transform: translate(-2px, -2px) rotate(5deg); }
+            100% { transform: translate(2px, 2px) rotate(-5deg); }
+        }
+
         .name-normal { color: #fff; }
         .name-dead { color: var(--w); text-decoration: line-through; opacity: 0.8; }
         .name-muted { color: var(--mute); font-weight: bold; }
@@ -153,6 +184,15 @@
     </style>
 </head>
 <body>
+
+<div id="dice-modal" class="hidden">
+    <h2 style="color:var(--guide)">🎲 กำลังทอยเหตุการณ์...</h2>
+    <div style="display: flex;">
+        <div id="dice-1" class="dice-box dice-rolling">1</div>
+        <div id="dice-2" class="dice-box dice-rolling">1</div>
+    </div>
+    <h1 id="dice-total-ani" style="font-size: 3em; margin-top: 20px;">?</h1>
+</div>
 
 <div class="container">
     <div id="screen-auth" class="card">
@@ -231,20 +271,20 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const eventTable = {
-        2: "คืนถัดไป เป้าหมายของมนุษย์หมาป่าจะกลายเป็นมนุษย์หมาป่าตัวใหม่",
-        3: "ผู้เล่นที่ถูกกล่าวหา 2 คน จะถูกกำจัดทันทีโดยไม่ต้องโหวต",
-        4: "จะมีผู้เล่นถูกกำจัด 2 คนแทนที่จะเป็น 1 คนเหมือนปกติ",
-        5: "บอกให้ผู้เล่นทุกคนรู้ว่าเทพพยากรณ์ถามบทบาทใครในคืนที่ผ่านมา",
+        2: "เป้าหมายของหมาป่าจะกลายเป็นหมาป่าตัวใหม่",
+        3: "ผู้เล่นถูกกล่าวหา 2 คน จะถูกกำจัดทันทีไม่ต้องโหวต",
+        4: "จะมีการกำจัดผู้เล่น 2 คนแทนที่จะเป็น 1 คน",
+        5: "บอกให้ทุกคนรู้ว่าเทพพยากรณ์เช็คใครคืนที่ผ่านมา",
         6: "ไม่มีเหตุการณ์ใดเกิดขึ้น",
         7: "ไม่มีเหตุการณ์ใดเกิดขึ้น",
         8: "ไม่มีเหตุการณ์ใดเกิดขึ้น",
         9: "เหตุการณ์เหมือนเมื่อวานนี้",
         10: "ใช้การกำจัดผู้เล่นแบบตัดตัวเลือก",
-        11: "ห้ามไม่ให้พูดคุยกัน นอกจากการทำการกล่าวหา",
-        12: "คืนถัดไป เป้าหมายของมนุษย์หมาป่าจะไม่ตายแต่จะต้องสูญเสียพลังพิเศษ"
+        11: "ห้ามพูดคุยกัน นอกจากการทำการกล่าวหา",
+        12: "เป้าหมายหมาป่าไม่ตายแต่สูญเสียพลังพิเศษ"
     };
 
     const rolesData = [
@@ -310,13 +350,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    function resetMobileZoom() {
-        const viewport = document.querySelector('meta[name="viewport"]');
-        if (viewport) {
-            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
-        }
-    }
-
     let myName = "", currentRoom = "", players = [], selectedRoles = [];
 
     document.getElementById('btn-create').onclick = async () => {
@@ -336,15 +369,10 @@
     };
 
     function initLobby() {
-        resetMobileZoom();
         document.getElementById('screen-auth').classList.add('hidden');
         document.getElementById('screen-game').classList.add('hidden');
         document.getElementById('screen-lobby').classList.remove('hidden');
         document.getElementById('display-room').innerText = currentRoom;
-
-        document.getElementById('btn-next-phase').classList.remove('hidden');
-        document.getElementById('btn-end-game').classList.remove('hidden');
-        document.getElementById('btn-back-to-lobby').classList.add('hidden');
 
         onValue(ref(db, 'rooms/' + currentRoom), (snap) => {
             const data = snap.val();
@@ -358,230 +386,155 @@
 
             if(data.gm === myName) {
                 document.getElementById('gm-setup').classList.remove('hidden');
-                document.getElementById('wait-msg').classList.add('hidden');
                 document.getElementById('gm-guide-btn').classList.remove('hidden');
-                
-                // โหลดบทบาทที่เคยเลือกไว้ตาที่แล้ว (ถ้ามี)
-                const lastRoles = data.lastSelectedRoles || [];
-                renderRoleSelector(lastRoles);
+                renderRoleSelector(data.lastSelectedRoles || []);
             } else {
                 document.getElementById('gm-setup').classList.add('hidden');
-                document.getElementById('wait-msg').classList.remove('hidden');
-                document.getElementById('gm-guide-btn').classList.add('hidden');
             }
 
-            document.getElementById('count-total').innerText = players.length;
             if(data.status === 'playing' || data.status === 'ended') renderGame(data);
-            if(data.status === 'waiting') {
-                document.getElementById('screen-game').classList.add('hidden');
-                document.getElementById('screen-lobby').classList.remove('hidden');
-            }
         });
     }
-
-    window.changeGM = (newGM) => update(ref(db, 'rooms/' + currentRoom), { gm: newGM });
 
     function renderRoleSelector(savedRoleIds = []) {
         const container = document.getElementById('role-selector');
         if(container.innerHTML !== "") return;
-        
-        selectedRoles = []; // Reset selected roles local
-        
-        const groups = [
-            { id: 'human', label: '🛡️ ฝ่ายชาวบ้าน', class: 'group-human' },
-            { id: 'wolf', label: '🐺 ฝ่ายหมาป่า', class: 'group-wolf' },
-            { id: 'other', label: '🔮 ฝ่ายอิสระ', class: 'group-other' }
-        ];
-
-        groups.forEach(group => {
-            const h = document.createElement('div');
-            h.className = `role-group-header ${group.class}`;
-            h.innerText = group.label;
-            container.appendChild(h);
-
-            rolesData.filter(r => r.team === group.id).forEach(r => {
-                const div = document.createElement('div');
-                div.className = 'role-item';
-                div.id = `role-card-${r.id}`;
-                div.innerHTML = `<span>${r.name} <small>(${r.en})</small></span><span class="${r.p<0?'p-minus':'p-plus'}">${r.p>0?'+'+r.p:r.p}</span>`;
-                
-                // ตรวจสอบว่าบทบาทนี้เคยถูกเลือกไว้ตาที่แล้วหรือไม่
-                if (savedRoleIds.includes(r.id)) {
-                    div.classList.add('selected');
-                    selectedRoles.push(r);
-                }
-
-                div.onclick = () => {
-                    div.classList.toggle('selected');
-                    const idx = selectedRoles.indexOf(r);
-                    if(idx > -1) selectedRoles.splice(idx, 1); else selectedRoles.push(r);
-                    updateSetupUI();
-                };
-                container.appendChild(div);
-            });
+        selectedRoles = [];
+        rolesData.forEach(r => {
+            const div = document.createElement('div');
+            div.className = 'role-item' + (savedRoleIds.includes(r.id) ? ' selected' : '');
+            if(savedRoleIds.includes(r.id)) selectedRoles.push(r);
+            div.innerHTML = `<span>${r.name}</span><span class="${r.p<0?'p-minus':'p-plus'}">${r.p>0?'+'+r.p:r.p}</span>`;
+            div.onclick = () => {
+                div.classList.toggle('selected');
+                const idx = selectedRoles.indexOf(r);
+                if(idx > -1) selectedRoles.splice(idx, 1); else selectedRoles.push(r);
+                updateSetupUI();
+            };
+            container.appendChild(div);
         });
-        updateSetupUI(); // คำนวณแต้มครั้งแรกหลังจากโหลดบทบาทเก่า
+        updateSetupUI();
     }
 
     function updateSetupUI() {
         document.getElementById('count-sel').innerText = selectedRoles.length;
-        const total = selectedRoles.reduce((s, x) => s + x.p, 0);
-        document.getElementById('balance-score').innerText = `แต้ม: ${total}`;
+        document.getElementById('balance-score').innerText = "แต้ม: " + selectedRoles.reduce((s, x) => s + x.p, 0);
     }
 
     document.getElementById('btn-start-game').onclick = () => {
         if(selectedRoles.length !== players.length) return alert(`เลือกให้ครบ ${players.length} บทบาท`);
-        
-        // บันทึกบทบาทที่เลือกลง Firebase เพื่อใช้ในตาถัดไป
-        const roleIdsToSave = selectedRoles.map(r => r.id);
-        
         let shuffled = [...selectedRoles].sort(() => Math.random() - 0.5);
         let gameData = {};
         players.forEach((p, i) => {
-            gameData[p] = { role: shuffled[i].name, desc: shuffled[i].desc, status: 'normal', isLinked: false, inCult: false };
+            gameData[p] = { role: shuffled[i].name, desc: shuffled[i].desc, status: 'normal' };
         });
-
         update(ref(db, 'rooms/' + currentRoom), { 
-            status: 'playing', 
-            gameData, 
-            phase: 0,
-            hasCupid: selectedRoles.some(r => r.id === 'v4'),
-            hasCult: selectedRoles.some(r => r.id === 'o4'),
+            status: 'playing', gameData, phase: 0, 
+            lastSelectedRoles: selectedRoles.map(r => r.id),
             useEvents: document.getElementById('use-event-system').checked,
-            currentEvent: 0,
-            lastSelectedRoles: roleIdsToSave // บันทึกที่นี่
+            currentEvent: 0
         });
     };
 
     function renderGame(data) {
-        resetMobileZoom();
         document.getElementById('screen-lobby').classList.add('hidden');
         document.getElementById('screen-game').classList.remove('hidden');
-        
-        const phases = [{ n: "กลางคืน 🌙", c: "night", b: "#1e3799" }, { n: "กลางวัน ☀️", c: "day", b: "#f39c12" }, { n: "โหวตประหาร ⚖️", c: "vote", b: "#e74c3c" }];
+        const phases = [{n:"คืน 🌙", c:"night"}, {n:"วัน ☀️", c:"day"}, {n:"โหวต ⚖️", c:"vote"}];
         document.body.className = phases[data.phase].c;
-        const pLabel = document.getElementById('phase-label');
-        pLabel.innerText = phases[data.phase].n;
-        pLabel.style.background = phases[data.phase].b;
+        document.getElementById('phase-label').innerText = phases[data.phase].n;
 
-        const pArr = Object.values(data.gameData || {});
-        
-        const statsBox = document.getElementById('stats-container');
         if(data.gm === myName) {
-            statsBox.classList.remove('hidden');
-            document.getElementById('stat-total').innerText = pArr.length;
-            document.getElementById('stat-live').innerText = pArr.filter(p => p.status === 'normal' || p.status === 'muted').length;
-            document.getElementById('stat-dead').innerText = pArr.filter(p => p.status === 'dead' || p.status === 'exiled').length;
-            if(data.hasCult) {
-                document.getElementById('stat-cult-box').classList.remove('hidden');
-                document.getElementById('stat-cult').innerText = pArr.filter(p => p.inCult).length;
-            }
+            document.getElementById('stats-container').classList.remove('hidden');
+            document.getElementById('gm-view').classList.remove('hidden');
+            document.getElementById('player-view').classList.add('hidden');
+            if(data.useEvents) document.getElementById('btn-roll-event').classList.remove('hidden');
+            renderGMTable(data);
         } else {
-            statsBox.classList.add('hidden');
+            document.getElementById('stats-container').classList.add('hidden');
+            document.getElementById('gm-view').classList.add('hidden');
+            document.getElementById('player-view').classList.remove('hidden');
+            const myInfo = data.gameData[myName];
+            document.getElementById('my-role-name').innerText = myInfo.role;
+            document.getElementById('my-status-label').innerText = myInfo.status;
         }
 
         const evBox = document.getElementById('event-display');
         if(data.useEvents && data.currentEvent > 0) {
             evBox.classList.remove('hidden');
             document.getElementById('event-text').innerText = `ทอยได้ ${data.currentEvent} : ${eventTable[data.currentEvent]}`;
-        } else {
-            evBox.classList.add('hidden');
-        }
-
-        if(data.gm === myName) {
-            document.getElementById('player-view').classList.add('hidden');
-            document.getElementById('gm-view').classList.remove('hidden');
-            if(data.useEvents) document.getElementById('btn-roll-event').classList.remove('hidden');
-            renderGMTable(data);
-        } else {
-            const myInfo = data.gameData ? data.gameData[myName] : null;
-            if(myInfo) {
-                document.getElementById('my-role-name').innerText = myInfo.role;
-                document.getElementById('my-role-desc').innerText = myInfo.desc;
-                const stLabel = document.getElementById('my-status-label');
-                const stMap = { dead: "💀 คุณตายแล้ว", muted: "🤫 คุณถูกใบ้", exiled: "⚖️ คุณถูกเนรเทศ", normal: "🟢 มีชีวิต" };
-                stLabel.innerText = stMap[myInfo.status] || "🟢 มีชีวิต";
-                stLabel.style.background = myInfo.status === 'normal' ? "transparent" : "rgba(0,0,0,0.3)";
-            }
-        }
+        } else { evBox.classList.add('hidden'); }
 
         if(data.status === 'ended') {
             document.getElementById('game-reveal').classList.remove('hidden');
-            document.getElementById('reveal-list').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
-                <div style="padding:8px; border-bottom:1px solid #222; display:flex; justify-content:space-between;">
-                    <span class="name-${info.status}">${p}</span>
-                    <span>${info.role}</span>
-                </div>
-            `).join('');
-
             document.getElementById('btn-next-phase').classList.add('hidden');
             document.getElementById('btn-end-game').classList.add('hidden');
             document.getElementById('btn-back-to-lobby').classList.remove('hidden');
-        } else {
-            document.getElementById('game-reveal').classList.add('hidden');
+            document.getElementById('reveal-list').innerHTML = Object.entries(data.gameData).map(([p, info]) => `<div>${p}: ${info.role}</div>`).join('');
         }
     }
 
+    // Animation ทอยลูกเต๋า
     document.getElementById('btn-roll-event').onclick = () => {
-        const d1 = Math.floor(Math.random() * 6) + 1;
-        const d2 = Math.floor(Math.random() * 6) + 1;
-        update(ref(db, `rooms/${currentRoom}`), { currentEvent: d1 + d2 });
+        const modal = document.getElementById('dice-modal');
+        const d1_el = document.getElementById('dice-1');
+        const d2_el = document.getElementById('dice-2');
+        const total_el = document.getElementById('dice-total-ani');
+        
+        modal.classList.remove('hidden');
+        total_el.innerText = "?";
+
+        let rollCount = 0;
+        const interval = setInterval(() => {
+            const temp1 = Math.floor(Math.random() * 6) + 1;
+            const temp2 = Math.floor(Math.random() * 6) + 1;
+            d1_el.innerText = temp1;
+            d2_el.innerText = temp2;
+            rollCount++;
+
+            if (rollCount > 15) { // หยุดหลังจาก 1.5 วินาที
+                clearInterval(interval);
+                const final1 = Math.floor(Math.random() * 6) + 1;
+                const final2 = Math.floor(Math.random() * 6) + 1;
+                const total = final1 + final2;
+                
+                d1_el.innerText = final1;
+                d2_el.innerText = final2;
+                d1_el.classList.remove('dice-rolling');
+                d2_el.classList.remove('dice-rolling');
+                total_el.innerText = total;
+
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    d1_el.classList.add('dice-rolling');
+                    d2_el.classList.add('dice-rolling');
+                    update(ref(db, `rooms/${currentRoom}`), { currentEvent: total });
+                }, 1000); // โชว์ผลลัพธ์ค้างไว้ 1 วินาที
+            }
+        }, 100);
     };
 
     function renderGMTable(data) {
-        const tbody = document.getElementById('gm-table-body');
-        if(!data.gameData) return;
-        tbody.innerHTML = Object.entries(data.gameData).map(([p, info]) => `
-            <tr class="tr-${info.status} ${info.isLinked ? 'couple-active' : ''} ${info.inCult ? 'cult-active' : ''}">
-                <td><span class="name-${info.status}">${p}</span><br><small style="opacity:0.5">${info.role}</small></td>
+        document.getElementById('gm-table-body').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
+            <tr>
+                <td>${p} (${info.role})</td>
                 <td><select onchange="window.updateStatus('${p}', this.value)">
-                    <option value="normal" ${info.status==='normal'?'selected':''}>มีชีวิต</option>
+                    <option value="normal" ${info.status==='normal'?'selected':''}>ปกติ</option>
                     <option value="dead" ${info.status==='dead'?'selected':''}>ตาย</option>
-                    <option value="muted" ${info.status==='muted'?'selected':''}>ใบ้</option>
-                    <option value="exiled" ${info.status==='exiled'?'selected':''}>เนรเทศ</option>
                 </select></td>
-                <td>
-                    ${data.hasCupid ? `<button onclick="window.toggleLink('${p}', ${info.isLinked})" style="width:auto; padding:5px; background:var(--cupid); margin-right:2px;">🔗</button>` : ''}
-                    ${data.hasCult ? `<button onclick="window.toggleCult('${p}', ${info.inCult})" style="width:auto; padding:5px; background:#b06ab3;">🔮</button>` : ''}
-                </td>
             </tr>
         `).join('');
     }
 
-    window.updateStatus = (name, st) => {
-        onValue(ref(db, `rooms/${currentRoom}`), (snap) => {
-            const data = snap.val();
-            const updates = {};
-            if(data.gameData[name].isLinked) {
-                Object.keys(data.gameData).forEach(k => { if(data.gameData[k].isLinked) updates[`gameData/${k}/status`] = st; });
-            } else { updates[`gameData/${name}/status`] = st; }
-            update(ref(db, `rooms/${currentRoom}`), updates);
-        }, { onlyOnce: true });
-    };
-
-    window.toggleLink = (n, cur) => update(ref(db, `rooms/${currentRoom}/gameData/${n}`), { isLinked: !cur });
-    window.toggleCult = (n, cur) => update(ref(db, `rooms/${currentRoom}/gameData/${n}`), { inCult: !cur });
-    
+    window.updateStatus = (n, s) => update(ref(db, `rooms/${currentRoom}/gameData/${n}`), { status: s });
     document.getElementById('btn-next-phase').onclick = () => {
         onValue(ref(db, `rooms/${currentRoom}/phase`), (s) => {
             update(ref(db, 'rooms/' + currentRoom), { phase: (s.val() + 1) % 3 });
         }, { onlyOnce: true });
     };
-
-    document.getElementById('btn-end-game').onclick = () => {
-        if(confirm("จบเกมและเฉลย?")) update(ref(db, 'rooms/' + currentRoom), { status: 'ended' });
-    };
-
+    document.getElementById('btn-end-game').onclick = () => update(ref(db, 'rooms/' + currentRoom), { status: 'ended' });
     document.getElementById('btn-back-to-lobby').onclick = () => {
-        update(ref(db, 'rooms/' + currentRoom), { 
-            status: 'waiting', 
-            gameData: null, 
-            phase: 0,
-            currentEvent: 0
-        }).then(() => {
-            document.getElementById('role-selector').innerHTML = ""; // เคลียร์เพื่อโหลดใหม่พร้อมค่าที่บันทึกไว้
-            initLobby();
-        });
+        update(ref(db, 'rooms/' + currentRoom), { status: 'waiting', gameData: null, phase: 0, currentEvent: 0 })
+        .then(() => { location.reload(); });
     };
 </script>
 </body>
