@@ -45,3 +45,4 @@ export const rolesData = [
     { id: 'o4', team: 'other', name: 'เจ้าลัทธิ', en: 'Cult Leader', p: 1, desc: 'ดึงคนเข้าลัทธิ ชนะเมื่อทุกคนที่เหลืออยู่ในลัทธิ' },
     { id: 'e4', team: 'other', name: 'มือระเบิดพลีชีพ', en: 'Mad Bomber', p: -2, desc: 'ถ้าตาย คนซ้ายและขวาจะตายตามไปด้วย' }
 ];
+
