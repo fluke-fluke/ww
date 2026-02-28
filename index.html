@@ -182,6 +182,7 @@
             <table class="dashboard-table">
                 <tbody id="gm-table-body"></tbody>
             </table>
+            <button id="btn-roll-event" class="btn-main" style="background: var(--guide);">🎲 สุ่มเหตุการณ์ประจำวัน</button>
             <button class="btn-main" id="btn-next-phase" style="margin-top:20px;">เปลี่ยนช่วงเวลา ➡️</button>
             <button class="btn-main" id="btn-end-game" style="background:#444;">🚩 จบเกม (เฉลย)</button>
         </div>
@@ -192,6 +193,26 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+    const eventTable = {
+    2: "เป้าหมายของหมาป่าจะกลายเป็นหมาป่าตัวใหม่",
+    3: "ผู้เล่นที่ถูกกล่าวหา 2 คน จะถูกกำจัดทันทีโดยไม่ต้องโหวต",
+    4: "จะมีผู้เล่นถูกกำจัด 2 คนแทนที่จะเป็น 1 คน",
+    5: "เผยเป้าหมายที่เทพพยากรณ์ตรวจสอบเมื่อคืน",
+    6: "ไม่มีเหตุการณ์ใดเกิดขึ้น",
+    7: "ไม่มีเหตุการณ์ใดเกิดขึ้น",
+    8: "ไม่มีเหตุการณ์ใดเกิดขึ้น",
+    9: "เหตุการณ์เหมือนเมื่อวานนี้",
+    10: "ใช้การกำจัดผู้เล่นแบบตัดตัวเลือก",
+    11: "ห้ามพูดคุยกัน นอกจากการทำการกล่าวหา",
+    12: "เป้าหมายหมาป่าไม่ตายแต่จะสูญเสียพลังพิเศษ"
+};
+    
+    document.getElementById('btn-roll-event').onclick = () => {
+    const d1 = Math.floor(Math.random() * 6) + 1;
+    const d2 = Math.floor(Math.random() * 6) + 1;
+    update(ref(db, `rooms/${currentRoom}`), { currentEventNum: d1 + d2 });
+};
+    
         const rolesData = [
         // --- 🛡️ ฝ่ายชาวบ้าน (Human Team) ---
         { id: 'v1', team: 'human', name: 'ชาวบ้าน', en: 'Villager', p: 1, desc: 'ไม่มีความสามารถพิเศษ พยายามหาตัวหมาป่าให้เจอ' },
@@ -376,6 +397,11 @@
         resetMobileZoom(); // เพิ่มตรงนี้
         document.getElementById('screen-lobby').classList.add('hidden');
         document.getElementById('screen-game').classList.remove('hidden');
+        const evBox = document.getElementById('event-box');
+if(data.useEventSystem && data.currentEventNum > 0) {
+    evBox.classList.remove('hidden');
+    document.getElementById('event-text').innerText = `🎲 ทอยได้ ${data.currentEventNum} : ${eventTable[data.currentEventNum]}`;
+}
         
         const phases = [
             { n: "กลางคืน 🌙", c: "night", b: "#1e3799" },
@@ -401,7 +427,7 @@
                 stLabel.innerText = "💀 คุณตายแล้ว";
                 stLabel.style.background = "#500";
             } else if(myInfo.status === 'muted') {
-                stLabel.innerText = "🤫 คุณถูกใบ้ (ห้ามพูด/โหวต)";
+                stLabel.innerText = "🤫 คุณถูกใบ้ (ห้ามพูด ทำท่าทางได้)";
                 stLabel.style.background = "#f39c12";
             } else if(myInfo.status === 'exiled') {
                 stLabel.innerText = "⚖️ คุณถูกเนรเทศ";
