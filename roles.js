@@ -45,3 +45,5 @@ export const rolesData = [
     { id: 'o4', team: 'other', name: 'เจ้าลัทธิ', en: 'Cult Leader', p: 1, desc: 'ดึงคนเข้าลัทธิ' },
     { id: 'e4', team: 'other', name: 'มือระเบิด', en: 'Mad Bomber', p: -2, desc: 'ตายแล้วระเบิดข้างๆ' }
 ];
+
+
