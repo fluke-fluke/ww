@@ -196,7 +196,7 @@
             <div id="event-text" style="font-weight: bold; margin-top: 3px;">ทอยได้ -- : ---</div>
         </div>
 
-        <div class="game-stats">
+        <div id="stats-container" class="game-stats hidden">
             <span>ทั้งหมด: <b id="stat-total">0</b></span>
             <span style="color:var(--v)">รอด: <b id="stat-live">0</b></span>
             <span style="color:var(--w)">ตาย: <b id="stat-dead">0</b></span>
@@ -231,7 +231,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const eventTable = {
         2: "คืนถัดไป เป้าหมายของมนุษย์หมาป่าจะกลายเป็นมนุษย์หมาป่าตัวใหม่",
@@ -248,53 +248,18 @@
     };
 
     const rolesData = [
-        // --- 🛡️ ฝ่ายชาวบ้าน (Human Team) ---
         { id: 'v1', team: 'human', name: 'ชาวบ้าน', en: 'Villager', p: 1, desc: 'ไม่มีความสามารถพิเศษ พยายามหาตัวหมาป่าให้เจอ' },
         { id: 'v2', team: 'human', name: 'เทพพยากรณ์', en: 'Seer', p: 7, desc: 'ตรวจสอบผู้เล่น 1 คนในแต่ละคืน ว่าเป็นหมาป่าหรือไม่' },
         { id: 'v3', team: 'human', name: 'จอมเวท', en: 'Spellcaster', p: 1, desc: 'เลือกผู้เล่นหนึ่งคนห้ามพูดในวันถัดไป (โดนใบ้)' },
         { id: 'v4', team: 'human', name: 'กามเทพ', en: 'Cupid', p: -3, desc: 'เลือกคู่รัก 2 คน หากคนใดคนหนึ่งตาย อีกคนจะตายตาม' },
         { id: 'v5', team: 'human', name: 'บอดี้การ์ด', en: 'Bodyguard', p: 3, desc: 'ปกป้องผู้เล่น 1 คนจากการถูกฆ่า (ห้ามเลือกตัวเอง/ซ้ำคืนเดิม)' },
-        { id: 'v6', team: 'human', name: 'ญาณทิพย์', en: 'Aura Seer', p: 3, desc: 'ตรวจสอบว่าผู้เล่นเป็นบทบาทพิเศษ (ไม่ใช่ชาวบ้าน/หมาป่าปกติ) หรือไม่' },
-        { id: 'v7', team: 'human', name: 'ขี้เมา', en: 'Drunk', p: 4, desc: 'ในช่วงแรกจะไม่รู้บทบาทตัวเอง จะรู้บทบาทจริงในคืนที่ 3' },
-        { id: 'v8', team: 'human', name: 'เจ้าชาย', en: 'Prince', p: 3, desc: 'หากถูกโหวตประหาร จะไม่ตายและต้องเผยบทบาทให้ทุกคนรู้' },
-        { id: 'v9', team: 'human', name: 'นักบวช', en: 'Priest', p: 3, desc: 'สามารถปกป้องผู้เล่นให้รอดจากการตายได้ 1 ครั้งต่อเกม' },
-        { id: 'v10', team: 'human', name: 'นักสืบเอกชน', en: 'P.I.', p: 3, desc: 'ตรวจสอบผู้เล่น 1 คน และคนข้างๆ ว่ามีใครเป็นหมาป่าหรือไม่' },
-        { id: 'v11', team: 'human', name: 'ตัวป่วน', en: 'Troublemaker', p: -3, desc: 'กวนการโหวต ทำให้มีการโหวตกำจัดคนได้ 2 คนในวันถัดไป' },
         { id: 'v12', team: 'human', name: 'แม่มด', en: 'Witch', p: 4, desc: 'มียาชุบชีวิต 1 ขวด และยาพิษ 1 ขวด ใช้ได้ตลอดทั้งเกม' },
-        { id: 'v13', team: 'human', name: 'แม่หมอ', en: 'Old Hag', p: 1, desc: 'เลือกสาปผู้เล่นให้ออกจากหมู่บ้าน (ห้ามโหวต) ในวันถัดไป' },
-        { id: 'v14', team: 'human', name: 'ศิษย์พยากรณ์', en: 'Apprentice Seer', p: 4, desc: 'หากเทพพยากรณ์ตาย คุณจะสืบทอดพลังและกลายเป็นเทพพยากรณ์แทน' },
-        { id: 'v15', team: 'human', name: 'นายกเทศมนตรี', en: 'Mayor', p: 2, desc: 'เมื่อโหวต เสียงของคุณจะมีค่าเท่ากับ 2 เสียง' },
         { id: 'v16', team: 'human', name: 'นายพราน', en: 'Hunter', p: 3, desc: 'หากตาย สามารถเลือกยิงผู้เล่นคนอื่นให้ตายตกตามกันได้ 1 คน' },
-        { id: 'v17', team: 'human', name: 'ผู้ป่วยติดเชื้อ', en: 'Disease', p: 3, desc: 'ถ้าหมาป่ากินคุณ หมาป่าจะติดโรคและฆ่าใครไม่ได้ในคืนถัดไป' },
-        { id: 'v18', team: 'human', name: 'ผู้รักสันติ', en: 'Pacifist', p: -1, desc: 'ต้องพยายามโหวตให้ผู้เล่นรอดเสมอ (คะแนนโหวตสวนทาง)' },
-        { id: 'v19', team: 'human', name: 'พรายกระซิบ', en: 'Ghost', p: 2, desc: 'จะตายในคืนแรก และสามารถส่งข้อความ 1 ตัวอักษรให้คนเป็นได้ในแต่ละวัน' },
-        { id: 'v20', team: 'human', name: 'เมสัน', en: 'Mason', p: 2, desc: 'จะรู้จักเมสันคนอื่นๆ ตั้งแต่คืนแรก' },
-        { id: 'v21', team: 'human', name: 'ภูตจำแลง', en: 'Doppelganger', p: -2, desc: 'เลือกคนหนึ่ง เมื่อคนนั้นตายคุณจะกลายเป็นบทบาทนั้นแทน' },
-        { id: 'v22', team: 'human', name: 'ลูกครึ่งหมาป่า', en: 'Lycan', p: -1, desc: 'เป็นชาวบ้าน แต่เทพพยากรณ์จะมองเห็นคุณเป็นหมาป่า' },
-        { id: 'v23', team: 'human', name: 'หนุ่มถึก', en: 'Tough Guy', p: 3, desc: 'ถ้าถูกหมาป่าฆ่า จะยังไม่ตายทันที แต่จะตายในคืนถัดไป' },
-        { id: 'v24', team: 'human', name: 'ไอ้ทึ่ม', en: 'Villager Idiot', p: 2, desc: 'ต้องโหวตประหารผู้เล่นเสมอ' },
-        { id: 'v25', team: 'human', name: 'ผู้เผยตัวตน', en: 'Revealer', p: 4, desc: 'ชี้เป้าหมาป่า ถ้าถูกหมาป่าจะตาย ถ้าชี้ผิดคุณจะตายแทน' },
-        { id: 'v26', team: 'human', name: 'นักสะกดจิต', en: 'Mentalist', p: 6, desc: 'ตรวจสอบผู้เล่น 2 คน ว่าอยู่ฝ่ายเดียวกันหรือไม่' },
-        { id: 'v27', team: 'human', name: 'พรานหญิง', en: 'Huntress', p: 3, desc: 'สามารถเลือกฆ่าคนได้ 1 ครั้งในช่วงกลางคืน' },
-        { id: 'v28', team: 'human', name: 'เทพผู้รู้แจ้ง', en: 'Mystic Seer', p: 9, desc: 'รู้บทบาทที่แท้จริงของผู้เล่นที่ตรวจสอบทันที (แม่นยำกว่าเทพพยากรณ์)' },
-
-        // --- 🐺 ฝ่ายหมาป่า (Wolf Team) ---
         { id: 'w1', team: 'wolf', name: 'หมาป่า', en: 'Werewolf', p: -6, desc: 'รวมหัวกับเพื่อนหมาป่าเพื่อฆ่าคนในทุกๆ คืน' },
-        { id: 'w2', team: 'wolf', name: 'หมาป่าเดียวดาย', en: 'Lone Wolf', p: -5, desc: 'ตื่นมาพร้อมหมาป่า แต่จะชนะได้ก็ต่อเมื่อเหลือรอดคนสุดท้ายคนเดียว' },
-        { id: 'w3', team: 'wolf', name: 'ลูกหมาป่า', en: 'Wolf Cub', p: -8, desc: 'ถ้าคุณตาย เพื่อนหมาป่าจะโกรธแค้นและฆ่าได้ 2 คนในคืนถัดไป' },
-        { id: 'w4', team: 'wolf', name: 'สมุนรับใช้', en: 'Minion', p: -6, desc: 'รู้ว่าใครเป็นหมาป่า แต่หมาป่าไม่รู้ว่าคุณเป็นใคร และไม่ได้ตื่นมาฆ่า' },
-        { id: 'w5', team: 'wolf', name: 'นางปีศาจ', en: 'Sorcerer', p: -3, desc: 'ตรวจสอบผู้เล่นเพื่อตามหาตัวเทพพยากรณ์ในแต่ละคืน' },
-        { id: 'w6', team: 'wolf', name: 'ผู้ต้องคำสาป', en: 'Cursed', p: -3, desc: 'เริ่มต้นเป็นชาวบ้าน แต่ถ้าโดนหมาป่ากัดจะกลายเป็นหมาป่าทันที' },
         { id: 'w7', team: 'wolf', name: 'หมาป่าจ่าฝูง', en: 'Alpha Wolf', p: -9, desc: 'สามารถเปลี่ยนเหยื่อให้กลายเป็นหมาป่าตัวใหม่ได้ 1 ครั้งต่อเกม' },
-        { id: 'w8', team: 'wolf', name: 'หมาป่าลึกลับ', en: 'Mystic Wolf', p: -9, desc: 'ตรวจสอบบทบาทพิเศษของชาวบ้านได้ในแต่ละคืน' },
-
-        // --- 🔮 ฝ่ายอิสระ (Other Team) ---
-        { id: 'o1', team: 'other', name: 'อันธพาล', en: 'Hoodlum', p: 0, desc: 'เลือกเป้าหมาย 2 คน ถ้าทั้งคู่ตายและคุณรอด คุณชนะ' },
-        { id: 'o2', team: 'other', name: 'ยาจก', en: 'Tanner', p: -2, desc: 'คุณเกลียดชีวิตตัวเอง คุณชนะได้ทางเดียวคือต้องทำให้คนโหวตประหารคุณ' },
-        { id: 'o3', team: 'other', name: 'แวมไพร์', en: 'Vampire', p: -7, desc: 'เลือกกัดคนในแต่ละคืน หมาป่าฆ่าคุณไม่ได้ และคุณจะชนะถ้าฆ่าคนหมด' },
-        { id: 'o4', team: 'other', name: 'เจ้าลัทธิ', en: 'Cult Leader', p: 1, desc: 'ล้างสมองคนเข้าลัทธิในทุกคืน ชนะเมื่อทุกคนที่เหลือรอดอยู่ในลัทธิหมด' },
-        { id: 'o5', team: 'other', name: 'มือระเบิดพลีชีพ', en: 'Mad Bomber', p: -2, desc: 'หากคุณถูกฆ่าหรือถูกโหวต คนที่นั่งข้างๆ ซ้าย-ขวา จะระเบิดตายตามไปด้วย' },
-        { id: 'o6', team: 'other', name: 'ฆาตกรต่อเนื่อง', en: 'Serial Killer', p: -8, desc: 'ตื่นมาฆ่าคนได้ทุกคืน และต้องเหลือรอดเป็นคนสุดท้ายเพื่อชนะ' }
+        { id: 'o2', team: 'other', name: 'ยาจก', en: 'Tanner', p: -2, desc: 'คุณชนะได้ทางเดียวคือต้องทำให้คนโหวตประหารคุณ' },
+        { id: 'o4', team: 'other', name: 'เจ้าลัทธิ', en: 'Cult Leader', p: 1, desc: 'ล้างสมองคนเข้าลัทธิ ชนะเมื่อทุกคนที่มีชีวิตอยู่ในลัทธิ' },
+        { id: 'o6', team: 'other', name: 'ฆาตกรต่อเนื่อง', en: 'Serial Killer', p: -8, desc: 'ตื่นมาฆ่าคนได้ทุกคืน และต้องเหลือรอดคนสุดท้ายเพื่อชนะ' }
     ];
 
     const firebaseConfig = {
@@ -338,11 +303,10 @@
     function initLobby() {
         resetMobileZoom();
         document.getElementById('screen-auth').classList.add('hidden');
-        document.getElementById('screen-game').classList.add('hidden'); // ซ่อนหน้าเกมถ้ากลับมา
+        document.getElementById('screen-game').classList.add('hidden');
         document.getElementById('screen-lobby').classList.remove('hidden');
         document.getElementById('display-room').innerText = currentRoom;
 
-        // Reset UI Buttons
         document.getElementById('btn-next-phase').classList.remove('hidden');
         document.getElementById('btn-end-game').classList.remove('hidden');
         document.getElementById('btn-back-to-lobby').classList.add('hidden');
@@ -361,7 +325,10 @@
                 document.getElementById('gm-setup').classList.remove('hidden');
                 document.getElementById('wait-msg').classList.add('hidden');
                 document.getElementById('gm-guide-btn').classList.remove('hidden');
-                renderRoleSelector();
+                
+                // โหลดบทบาทที่เคยเลือกไว้ตาที่แล้ว (ถ้ามี)
+                const lastRoles = data.lastSelectedRoles || [];
+                renderRoleSelector(lastRoles);
             } else {
                 document.getElementById('gm-setup').classList.add('hidden');
                 document.getElementById('wait-msg').classList.remove('hidden');
@@ -379,9 +346,12 @@
 
     window.changeGM = (newGM) => update(ref(db, 'rooms/' + currentRoom), { gm: newGM });
 
-    function renderRoleSelector() {
+    function renderRoleSelector(savedRoleIds = []) {
         const container = document.getElementById('role-selector');
         if(container.innerHTML !== "") return;
+        
+        selectedRoles = []; // Reset selected roles local
+        
         const groups = [
             { id: 'human', label: '🛡️ ฝ่ายชาวบ้าน', class: 'group-human' },
             { id: 'wolf', label: '🐺 ฝ่ายหมาป่า', class: 'group-wolf' },
@@ -397,7 +367,15 @@
             rolesData.filter(r => r.team === group.id).forEach(r => {
                 const div = document.createElement('div');
                 div.className = 'role-item';
+                div.id = `role-card-${r.id}`;
                 div.innerHTML = `<span>${r.name} <small>(${r.en})</small></span><span class="${r.p<0?'p-minus':'p-plus'}">${r.p>0?'+'+r.p:r.p}</span>`;
+                
+                // ตรวจสอบว่าบทบาทนี้เคยถูกเลือกไว้ตาที่แล้วหรือไม่
+                if (savedRoleIds.includes(r.id)) {
+                    div.classList.add('selected');
+                    selectedRoles.push(r);
+                }
+
                 div.onclick = () => {
                     div.classList.toggle('selected');
                     const idx = selectedRoles.indexOf(r);
@@ -407,6 +385,7 @@
                 container.appendChild(div);
             });
         });
+        updateSetupUI(); // คำนวณแต้มครั้งแรกหลังจากโหลดบทบาทเก่า
     }
 
     function updateSetupUI() {
@@ -417,11 +396,16 @@
 
     document.getElementById('btn-start-game').onclick = () => {
         if(selectedRoles.length !== players.length) return alert(`เลือกให้ครบ ${players.length} บทบาท`);
+        
+        // บันทึกบทบาทที่เลือกลง Firebase เพื่อใช้ในตาถัดไป
+        const roleIdsToSave = selectedRoles.map(r => r.id);
+        
         let shuffled = [...selectedRoles].sort(() => Math.random() - 0.5);
         let gameData = {};
         players.forEach((p, i) => {
             gameData[p] = { role: shuffled[i].name, desc: shuffled[i].desc, status: 'normal', isLinked: false, inCult: false };
         });
+
         update(ref(db, 'rooms/' + currentRoom), { 
             status: 'playing', 
             gameData, 
@@ -429,7 +413,8 @@
             hasCupid: selectedRoles.some(r => r.id === 'v4'),
             hasCult: selectedRoles.some(r => r.id === 'o4'),
             useEvents: document.getElementById('use-event-system').checked,
-            currentEvent: 0
+            currentEvent: 0,
+            lastSelectedRoles: roleIdsToSave // บันทึกที่นี่
         });
     };
 
@@ -445,12 +430,19 @@
         pLabel.style.background = phases[data.phase].b;
 
         const pArr = Object.values(data.gameData || {});
-        document.getElementById('stat-total').innerText = pArr.length;
-        document.getElementById('stat-live').innerText = pArr.filter(p => p.status === 'normal' || p.status === 'muted').length;
-        document.getElementById('stat-dead').innerText = pArr.filter(p => p.status === 'dead' || p.status === 'exiled').length;
-        if(data.hasCult) {
-            document.getElementById('stat-cult-box').classList.remove('hidden');
-            document.getElementById('stat-cult').innerText = pArr.filter(p => p.inCult).length;
+        
+        const statsBox = document.getElementById('stats-container');
+        if(data.gm === myName) {
+            statsBox.classList.remove('hidden');
+            document.getElementById('stat-total').innerText = pArr.length;
+            document.getElementById('stat-live').innerText = pArr.filter(p => p.status === 'normal' || p.status === 'muted').length;
+            document.getElementById('stat-dead').innerText = pArr.filter(p => p.status === 'dead' || p.status === 'exiled').length;
+            if(data.hasCult) {
+                document.getElementById('stat-cult-box').classList.remove('hidden');
+                document.getElementById('stat-cult').innerText = pArr.filter(p => p.inCult).length;
+            }
+        } else {
+            statsBox.classList.add('hidden');
         }
 
         const evBox = document.getElementById('event-display');
@@ -478,7 +470,6 @@
             }
         }
 
-        // เมื่อเกมจบ
         if(data.status === 'ended') {
             document.getElementById('game-reveal').classList.remove('hidden');
             document.getElementById('reveal-list').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
@@ -488,7 +479,6 @@
                 </div>
             `).join('');
 
-            // ซ่อนปุ่มควบคุม GM และแสดงปุ่มกลับ Lobby สำหรับทุกคน
             document.getElementById('btn-next-phase').classList.add('hidden');
             document.getElementById('btn-end-game').classList.add('hidden');
             document.getElementById('btn-back-to-lobby').classList.remove('hidden');
@@ -547,7 +537,6 @@
         if(confirm("จบเกมและเฉลย?")) update(ref(db, 'rooms/' + currentRoom), { status: 'ended' });
     };
 
-    // ปุ่มกลับหน้า Lobby
     document.getElementById('btn-back-to-lobby').onclick = () => {
         update(ref(db, 'rooms/' + currentRoom), { 
             status: 'waiting', 
@@ -555,8 +544,7 @@
             phase: 0,
             currentEvent: 0
         }).then(() => {
-            selectedRoles = [];
-            document.getElementById('role-selector').innerHTML = ""; // ล้างหน้าเลือกบทบาทใหม่
+            document.getElementById('role-selector').innerHTML = ""; // เคลียร์เพื่อโหลดใหม่พร้อมค่าที่บันทึกไว้
             initLobby();
         });
     };
