@@ -3,33 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Werewolf Online 🐺</title>
+    <title>Werewolf GM Mode 🐺</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #e74c3c; --bg: #1a1a1a; --night: #2980b9; --day: #f1c40f; }
+        :root { --primary: #2c3e50; --accent: #e74c3c; --bg: #121212; --night: #1e3799; --day: #f39c12; --gm: #8e44ad; }
         body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #ddd; display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .card { background: #222; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 100%; max-width: 420px; text-align: center; border: 1px solid #444; }
+        .card { background: #1e1e1e; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 420px; text-align: center; border: 1px solid #333; }
         .hidden { display: none; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #444; border-radius: 8px; font-size: 16px; background: #333; color: white; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #333; border-radius: 8px; font-size: 16px; background: #252525; color: white; box-sizing: border-box; }
         button { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
         .btn-black { background: var(--primary); color: white; }
-        .btn-outline { background: transparent; border: 2px solid var(--primary); color: white; }
-        .btn-phase { background: #8e44ad; color: white; margin-top: 15px; }
-        .room-code-tag { font-size: 2rem; font-weight: bold; letter-spacing: 5px; color: var(--accent); margin: 10px 0; border: 2px solid #555; display: inline-block; padding: 0 15px; }
-        .player-badge { background: #333; padding: 8px 15px; margin: 5px; border-radius: 20px; display: inline-block; border: 1px solid #555; }
-        #timer { font-size: 3.5rem; font-weight: bold; margin: 10px 0; font-family: monospace; color: var(--day); }
-        .phase-indicator { font-size: 1.2rem; font-weight: bold; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
-        .phase-night { background: #2980b9; color: white; }
-        .phase-day { background: #f1c40f; color: #333; }
-        .phase-vote { background: #e74c3c; color: white; }
-        .role-box { padding: 20px; border: 3px dashed #555; margin: 15px 0; border-radius: 10px; background: #2a2a2a; }
+        .btn-outline { background: transparent; border: 2px solid #444; color: #aaa; }
+        .btn-start { background: #27ae60; color: white; font-size: 18px; margin-top: 10px; }
+        .btn-phase { background: var(--gm); color: white; margin-top: 15px; }
+        .room-code-tag { font-size: 2rem; font-weight: bold; letter-spacing: 5px; color: var(--accent); margin: 10px 0; border: 2px solid #444; display: inline-block; padding: 0 15px; }
+        .player-badge { background: #2a2a2a; padding: 6px 12px; margin: 4px; border-radius: 15px; display: inline-block; border: 1px solid #333; font-size: 13px; }
+        .phase-indicator { font-size: 1.3rem; font-weight: bold; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid rgba(255,255,255,0.1); }
+        .phase-night { background: var(--night); color: white; }
+        .phase-day { background: var(--day); color: #000; }
+        .phase-vote { background: var(--accent); color: white; }
+        .role-box { padding: 20px; border: 2px solid #444; margin: 15px 0; border-radius: 12px; background: #252525; }
         #my-role { font-size: 1.8rem; margin: 10px 0; }
+        .gm-panel { background: #2c3e50; padding: 10px; border-radius: 8px; margin-top: 20px; text-align: left; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div id="home-screen">
-        <h1 style="color: var(--accent);">WEREWOLF 🐺</h1>
+        <h1 style="color: var(--accent); margin-bottom: 0;">WEREWOLF 🐺</h1>
+        <p style="color: #666; font-size: 12px; margin-top: 5px;">GM MODE (No Timer)</p>
         <input type="text" id="username" placeholder="กรอกชื่อของคุณ">
         <input type="text" id="room-input" placeholder="รหัสห้อง 4 หลัก" maxlength="4">
         <button class="btn-black" id="btn-create">สร้างห้อง (Host)</button>
@@ -40,32 +42,31 @@
         <p>รหัสห้อง: <span class="room-code-tag" id="display-code">----</span></p>
         <div id="player-list"></div>
         <div id="host-controls" class="hidden">
-            <p>ตั้งเวลาต่อรอบ (วินาที)</p>
-            <select id="time-select">
-                <option value="60">1 นาที</option>
-                <option value="180">3 นาที</option>
-                <option value="300">5 นาที</option>
-            </select>
-            <button class="btn-phase" style="background: #27ae60;" id="btn-start-game">เริ่มเกม (แจกบทบาท)</button>
+            <p style="margin-top: 20px; color: var(--gm);">เลือกว่าใครจะเป็น GM</p>
+            <select id="gm-select"></select>
+            <button class="btn-start" id="btn-start-game">เริ่มเกม</button>
         </div>
         <p id="wait-msg">⌛ รอ Host เริ่มเกม...</p>
     </div>
 
     <div id="game-screen" class="hidden">
-        <div id="phase-label" class="phase-indicator">ช่วงเวลากลางคืน 🌙</div>
-        <div id="timer">00:00</div>
+        <div id="phase-label" class="phase-indicator">รอเริ่ม...</div>
         
         <div class="role-box">
-            <p style="margin:0">บทบาทของคุณ</p>
+            <p style="margin:0; color: #888;">บทบาทของคุณ</p>
             <h2 id="my-role">...</h2>
             <p id="role-desc" style="font-size: 0.9rem; color: #aaa;"></p>
         </div>
 
-        <div id="host-game-controls" class="hidden">
-            <p>คำสั่ง Host:</p>
-            <button class="btn-outline" id="next-phase-btn">ถัดไป (คืน > เช้า > โหวต)</button>
-            <button class="btn-black" id="end-game-btn">จบเกม/ล้างห้อง</button>
+        <div id="gm-controls" class="hidden">
+            <div class="gm-panel">
+                <p style="margin: 0 0 5px 0; font-weight: bold; color: #f1c40f;">แผงควบคุม GM:</p>
+                <div id="gm-roles-list"></div>
+            </div>
+            <button class="btn-phase" id="next-phase-btn">เปลี่ยนช่วงเวลาถัดไป ➡️</button>
+            <button class="btn-outline" id="end-game-btn" style="margin-top: 15px; width: 100%;">จบเกม / กลับหน้าหลัก</button>
         </div>
+        <p id="not-gm-msg" style="color: #666; font-size: 13px;">รอ GM ควบคุมช่วงเวลา...</p>
     </div>
 </div>
 
@@ -74,103 +75,81 @@
     import { getDatabase, ref, set, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
-        // ใช้ Config เดิมของคุณ
-        apiKey: "AIzaSyBemaycCfIrcNWlnZPas_Y19UZJg_x7f64",
-        authDomain: "insider-2b1e8.firebaseapp.com",
-        databaseURL: "https://insider-2b1e8-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "insider-2b1e8",
-        storageBucket: "insider-2b1e8.firebasestorage.app",
-        messagingSenderId: "401183902279",
-        appId: "1:401183902279:web:e10be99798a90a69ce3f62"
+        apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo",
+        authDomain: "fir-77b01.firebaseapp.com",
+        projectId: "fir-77b01",
+        storageBucket: "fir-77b01.firebasestorage.app",
+        messagingSenderId: "364738165804",
+        appId: "1:364738165804:web:248db4d4a74e146999e589",
+        measurementId: "G-381MWEWJ9F"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let myName = "", currentRoom = "", isHost = false, timerInterval = null;
-    const phases = ["NIGHT", "DAY", "VOTE"];
+    let myName = "", currentRoom = "", isHost = false, playersInRoom = [];
 
     function showScreen(id) {
         document.querySelectorAll('.card > div').forEach(div => div.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
     }
 
-    // --- ระบบจัดการห้อง ---
     document.getElementById('btn-create').onclick = async () => {
         myName = document.getElementById('username').value.trim();
-        if (!myName) return alert("ใส่ชื่อด้วยจ้า");
+        if (!myName) return alert("กรุณาใส่ชื่อ");
         isHost = true;
         currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
-        await set(ref(db, 'rooms/' + currentRoom), { 
-            status: 'waiting', 
-            host: myName, 
-            players: { [myName]: "waiting" },
-            phase: 0,
-            timeLeft: 0
-        });
+        await set(ref(db, 'rooms/' + currentRoom), { status: 'waiting', host: myName, players: { [myName]: true }, phase: 0 });
         initRoomListener();
     };
 
     document.getElementById('btn-join').onclick = async () => {
         myName = document.getElementById('username').value.trim();
         currentRoom = document.getElementById('room-input').value.trim();
-        if (!myName || currentRoom.length < 4) return alert("เช็คชื่อและรหัสห้อง");
-        await update(ref(db, `rooms/${currentRoom}/players`), { [myName]: "waiting" });
+        if (!myName || currentRoom.length < 4) return alert("ข้อมูลไม่ครบ");
+        await update(ref(db, `rooms/${currentRoom}/players`), { [myName]: true });
         initRoomListener();
     };
 
     function initRoomListener() {
         onValue(ref(db, 'rooms/' + currentRoom), (snapshot) => {
             const data = snapshot.val();
-            if (!data) return location.reload();
+            if (!data) return;
 
-            const players = data.players ? Object.keys(data.players) : [];
+            playersInRoom = data.players ? Object.keys(data.players) : [];
             document.getElementById('display-code').innerText = currentRoom;
-            document.getElementById('player-list').innerHTML = players.map(p => `<span class="player-badge">${p}</span>`).join('');
+            document.getElementById('player-list').innerHTML = playersInRoom.map(p => `<span class="player-badge">${p}</span>`).join('');
 
             if (isHost) {
                 document.getElementById('host-controls').classList.remove('hidden');
                 document.getElementById('wait-msg').classList.add('hidden');
+                const sel = document.getElementById('gm-select');
+                const lastVal = sel.value;
+                sel.innerHTML = playersInRoom.map(p => `<option value="${p}">${p}</option>`).join('');
+                if (playersInRoom.includes(lastVal)) sel.value = lastVal;
             }
 
-            if (data.status === 'playing') {
-                renderGame(data);
-            } else {
-                showScreen('lobby-screen');
-            }
+            if (data.status === 'playing') renderGame(data);
+            else showScreen('lobby-screen');
         });
+        onDisconnect(ref(db, `rooms/${currentRoom}/players/${myName}`)).remove();
     }
 
-    // --- ระบบเริ่มเกมและสุ่มบทบาท ---
     document.getElementById('btn-start-game').onclick = () => {
-        const players = Object.keys(playersInRoomList); // ดึงจากรายชื่อที่มี
-        if (players.length < 3) return alert("ต้องมีอย่างน้อย 3 คนครับ");
+        const gm = document.getElementById('gm-select').value;
+        const playersToAssign = playersInRoom.filter(p => p !== gm);
+        if (playersToAssign.length < 2) return alert("ต้องมีผู้เล่น (ไม่รวม GM) อย่างน้อย 2 คน");
 
-        let roles = {};
-        let shuffled = [...players].sort(() => Math.random() - 0.5);
+        let roles = { [gm]: "GM" };
+        let shuffled = [...playersToAssign].sort(() => Math.random() - 0.5);
         
-        // สุ่มหมาป่า 1 ตัว (ถ้าคนเยอะค่อยเพิ่ม)
         roles[shuffled[0]] = "WEREWOLF";
-        // สุ่มพยากรณ์ 1 ตัว
         roles[shuffled[1]] = "SEER";
-        // ที่เหลือเป็นชาวบ้าน
-        for(let i=2; i<shuffled.length; i++) {
-            roles[shuffled[i]] = "VILLAGER";
-        }
+        for(let i=2; i<shuffled.length; i++) roles[shuffled[i]] = "VILLAGER";
 
-        update(ref(db, 'rooms/' + currentRoom), {
-            status: 'playing',
-            roles: roles,
-            phase: 0, // 0: Night, 1: Day, 2: Vote
-            timeLeft: parseInt(document.getElementById('time-select').value)
-        });
+        update(ref(db, 'rooms/' + currentRoom), { status: 'playing', roles: roles, phase: 0, gm: gm });
     };
 
-    // ตัวแปรเก็บรายชื่อเพื่อความง่าย
-    let playersInRoomList = {};
-    onValue(ref(db, `rooms/${currentRoom}/players`), (snap) => { playersInRoomList = snap.val() || {}; });
-
-    // --- ระบบหน้าจอเล่นเกม ---
     function renderGame(data) {
         showScreen('game-screen');
         const myRole = data.roles[myName];
@@ -178,65 +157,47 @@
         const roleDesc = document.getElementById('role-desc');
         const phaseLabel = document.getElementById('phase-label');
 
-        // แสดงบทบาท
-        roleDisplay.innerText = myRole === "WEREWOLF" ? "หมาป่า 🐺" : (myRole === "SEER" ? "นักพยากรณ์ 🔮" : "ชาวบ้าน 👨‍🌾");
-        roleDisplay.style.color = myRole === "WEREWOLF" ? "#e74c3c" : "#3498db";
-        roleDesc.innerText = getRoleHint(myRole);
-
-        // แสดง Phase
-        const phaseNames = ["ช่วงเวลากลางคืน 🌙", "ช่วงเวลาตอนเช้า ☀️", "ช่วงเวลาโหวต ⚖️"];
-        const phaseClasses = ["phase-night", "phase-day", "phase-vote"];
-        phaseLabel.innerText = phaseNames[data.phase];
-        phaseLabel.className = "phase-indicator " + phaseClasses[data.phase];
-
-        if (isHost) {
-            document.getElementById('host-game-controls').classList.remove('hidden');
-            handleTimerHost(data.timeLeft);
+        // จัดการหน้าจอตามบทบาท
+        if (myRole === "GM") {
+            roleDisplay.innerText = "คุณคือ GM 🎙️";
+            roleDisplay.style.color = "#8e44ad";
+            roleDesc.innerText = "คุณมีหน้าที่ดำเนินเกมและกดเปลี่ยนช่วงเวลา";
+            document.getElementById('gm-controls').classList.remove('hidden');
+            document.getElementById('not-gm-msg').classList.add('hidden');
+            
+            // GM เห็นบทบาททุกคน
+            let listHtml = "";
+            for (let p in data.roles) {
+                if(p !== myName) listHtml += `<div>• ${p}: <b>${data.roles[p]}</b></div>`;
+            }
+            document.getElementById('gm-roles-list').innerHTML = listHtml;
         } else {
-            updateTimerUI(data.timeLeft);
+            roleDisplay.innerText = myRole === "WEREWOLF" ? "หมาป่า 🐺" : (myRole === "SEER" ? "นักพยากรณ์ 🔮" : "ชาวบ้าน 👨‍🌾");
+            roleDisplay.style.color = myRole === "WEREWOLF" ? "#e74c3c" : (myRole === "SEER" ? "#3498db" : "#999");
+            roleDesc.innerText = "รอฟังคำสั่งจาก GM และทำตามบทบาทของคุณ";
+            document.getElementById('gm-controls').classList.add('hidden');
+            document.getElementById('not-gm-msg').classList.remove('hidden');
         }
-    }
 
-    function getRoleHint(role) {
-        if(role === "WEREWOLF") return "ปรึกษากับหมาป่าตัวอื่น (ถ้ามี) เพื่อเลือกกำจัดชาวบ้านในคืนนี้";
-        if(role === "SEER") return "คุณสามารถเลือกดูบทบาทของผู้เล่นได้ 1 คนในคืนนี้";
-        return "พยายามจับผิดหมาป่า และรักษาชีวิตให้รอดถึงเช้า";
-    }
-
-    // --- ระบบเวลาและเปลี่ยน Phase ---
-    function handleTimerHost(seconds) {
-        if (timerInterval) return; // ป้องกัน Loop ซ้ำ
-        timerInterval = setInterval(() => {
-            onValue(ref(db, `rooms/${currentRoom}/timeLeft`), (snap) => {
-                let currentT = snap.val();
-                if (currentT > 0) {
-                    update(ref(db, `rooms/${currentRoom}`), { timeLeft: currentT - 1 });
-                    updateTimerUI(currentT - 1);
-                }
-            }, { onlyOnce: true });
-        }, 1000);
-    }
-
-    function updateTimerUI(seconds) {
-        const m = Math.floor(seconds / 60), s = seconds % 60;
-        document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+        // จัดการ Phase
+        const phaseInfo = [
+            { name: "ช่วงเวลากลางคืน 🌙", class: "phase-night" },
+            { name: "ช่วงเวลาตอนเช้า ☀️", class: "phase-day" },
+            { name: "ช่วงเวลาโหวต ⚖️", class: "phase-vote" }
+        ];
+        phaseLabel.innerText = phaseInfo[data.phase].name;
+        phaseLabel.className = "phase-indicator " + phaseInfo[data.phase].class;
     }
 
     document.getElementById('next-phase-btn').onclick = () => {
-        onValue(ref(db, `rooms/${currentRoom}`), (snap) => {
-            const data = snap.val();
-            let nextPhase = (data.phase + 1) % 3;
-            update(ref(db, `rooms/${currentRoom}`), { 
-                phase: nextPhase,
-                timeLeft: 60 // รีเซ็ตเวลาเป็น 1 นาทีเมื่อเปลี่ยนช่วง
-            });
+        onValue(ref(db, `rooms/${currentRoom}/phase`), (snap) => {
+            let next = (snap.val() + 1) % 3;
+            update(ref(db, `rooms/${currentRoom}`), { phase: next });
         }, { onlyOnce: true });
     };
 
     document.getElementById('end-game-btn').onclick = () => {
-        if(confirm("ต้องการจบเกมและกลับหน้า Lobby หรือไม่?")) {
-            clearInterval(timerInterval);
-            timerInterval = null;
+        if(confirm("จบเกมและกลับหน้า Lobby ใช่หรือไม่?")) {
             update(ref(db, 'rooms/' + currentRoom), { status: 'waiting' });
         }
     };
