@@ -8,11 +8,13 @@
     <style>
         :root {
             --primary: #ff2e63; --bg: #0f0f1a; --card: #161625;
-            --v: #4ecca3; --w: #ff4b2b; --guide: #00adb5;
+            --v: #4ecca3; --w: #ff4b2b; --mute: #f39c12;
+            --exile: #7f8c8d; --cupid: #ff69b4; --guide: #00adb5;
         }
-        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 10px; display: flex; justify-content: center; }
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 10px; display: flex; justify-content: center; transition: background 0.5s ease; }
+        body.night { background: #0a0a2e; } body.day { background: #4a3300; } body.vote { background: #3d0000; }
         .container { width: 100%; max-width: 600px; }
-        .card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; position: relative; }
         .hidden { display: none !important; }
 
         input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252535; color: white; box-sizing: border-box; }
@@ -21,24 +23,36 @@
         .btn-secondary { background: #333; color: white; }
 
         /* Role Selector */
-        .role-group-header { padding: 8px 12px; margin-top: 15px; font-size: 0.85em; font-weight: bold; border-radius: 5px; background: rgba(255,255,255,0.05); }
+        .role-group-header { padding: 10px 15px; margin-top: 15px; font-size: 0.9em; font-weight: bold; border-radius: 8px; background: rgba(255,255,255,0.05); }
         .group-human { color: var(--v); border-left: 4px solid var(--v); }
         .group-wolf { color: var(--w); border-left: 4px solid var(--w); }
         .group-other { color: #b06ab3; border-left: 4px solid #b06ab3; }
+        .role-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; }
+        .qty-controls { display: flex; align-items: center; gap: 15px; }
+        .btn-qty { width: 35px; height: 35px; background: #333; color: white; border-radius: 8px; font-size: 1.2em; display: flex; justify-content: center; align-items: center; }
+        .qty-num { min-width: 25px; text-align: center; font-weight: bold; font-size: 1.1em; }
 
-        .role-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #222; }
-        .qty-controls { display: flex; align-items: center; gap: 12px; }
-        .btn-qty { width: 32px; height: 32px; background: #333; color: white; border-radius: 6px; font-size: 1.2em; display: flex; justify-content: center; align-items: center; }
-        .qty-num { min-width: 20px; text-align: center; font-weight: bold; }
+        /* Badges */
+        .player-badge { background: #252535; padding: 6px 12px; border-radius: 8px; margin: 4px; display: inline-block; border: 1px solid #444; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .gm-badge { background: #ffd700; color: black; padding: 2px 5px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; font-weight: bold; }
+        .game-stats { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.85em; }
+        .dashboard-table { width: 100%; border-collapse: collapse; }
+        .dashboard-table td { padding: 10px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
+        .name-dead { text-decoration: line-through; opacity: 0.5; color: var(--w); }
+        .name-muted { color: var(--mute); font-weight: bold; }
+        .name-exiled { color: var(--exile); }
+
+        /* Loading Effect */
+        .event-rolling { color: var(--guide); animation: blink 0.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="screen-auth" class="card">
-        <h1 style="text-align:center; color:var(--primary);">WEREWOLF 🐺</h1>
+        <h1 style="text-align:center; color:var(--primary); margin:0;">WEREWOLF 🐺</h1>
         <input type="text" id="username" placeholder="ชื่อของคุณ">
         <input type="text" id="room-code" placeholder="รหัสห้อง 4 หลัก">
         <button class="btn-main" id="btn-create">สร้างห้อง (HOST)</button>
@@ -46,44 +60,67 @@
     </div>
 
     <div id="screen-lobby" class="card hidden">
-        <h2 style="margin:0;">ห้อง: <span id="display-room" style="color:var(--primary)">----</span></h2>
-        <div id="player-list" style="margin: 10px 0;"></div>
+        <h2 style="margin-top: 0;">ห้อง: <span id="display-room" style="color:var(--primary)">----</span></h2>
+        <div id="player-list"></div>
         
         <div id="gm-setup" class="hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:10px; border-radius:8px;">
-                <div>จำนวน: <b id="count-sel">0</b> / <b id="count-total">0</b></div>
+            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin: 10px 0;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="use-event-system" style="width: auto; margin-right: 10px;"> ใช้งานระบบเหตุการณ์ 🎲
+                </label>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">บทบาท (<span id="count-sel">0</span>/<span id="count-total">0</span>)</h3>
                 <div id="balance-score">แต้ม: 0</div>
             </div>
-            <div id="role-selector" style="max-height: 350px; overflow-y: auto;"></div>
-            <button class="btn-main" id="btn-start-game" style="background:var(--v); color:#000; margin-top:15px;">เริ่มเกม 🏁</button>
+            <div id="role-selector" style="max-height: 350px; overflow-y: auto; margin: 10px 0;"></div>
+            <button class="btn-main" id="btn-start-game" style="background:var(--v); color:#000;">เริ่มเกม 🏁</button>
         </div>
         <p id="wait-msg" style="text-align:center; color:#666;">⏳ รอ GM เริ่มเกม...</p>
     </div>
 
     <div id="screen-game" class="card hidden">
-        <div id="phase-label" style="text-align:center; padding:10px; border-radius:8px; font-weight:bold; margin-bottom:10px;">ช่วงเวลา</div>
-        <div id="event-display" class="hidden" style="background:rgba(0,173,181,0.1); border:1px solid var(--guide); padding:10px; border-radius:8px; margin-bottom:10px; text-align:center;"></div>
+        <div id="phase-label" style="text-align:center; font-weight:bold; padding:12px; border-radius:10px; margin-bottom:10px;">ช่วงเวลา</div>
         
-        <div id="gm-view" class="hidden">
-            <button id="btn-roll" class="btn-main" style="background:var(--guide)">🎲 ทอยเหตุการณ์</button>
-            <div id="gm-player-list"></div>
-            <button class="btn-main" id="btn-next" style="margin-top:15px;">เปลี่ยนช่วงเวลา ➡️</button>
-            <button class="btn-secondary" id="btn-end">จบเกมและเฉลย 🚩</button>
+        <div id="event-display" class="hidden" style="background: rgba(0, 173, 181, 0.1); border: 1px solid var(--guide); padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+            <small style="color: var(--guide);">🎲 เหตุการณ์ประจำวัน</small>
+            <div id="event-text" style="font-weight: bold; margin-top: 5px; min-height: 24px;"></div>
+        </div>
+
+        <div id="stats-container" class="game-stats hidden">
+            <span>ทั้งหมด: <b id="stat-total">0</b></span>
+            <span style="color:var(--v)">รอด: <b id="stat-live">0</b></span>
+            <span style="color:var(--w)">ตาย: <b id="stat-dead">0</b></span>
         </div>
 
         <div id="player-view" style="text-align:center; padding:20px;">
-            <p>บทบาทของคุณคือ</p>
-            <h1 id="my-role" style="color:var(--v); font-size:2.5em; margin:10px 0;"></h1>
-            <p id="my-status" style="font-weight:bold;"></p>
+            <p style="margin:0;">บทบาทของคุณ</p>
+            <h1 id="my-role-name" style="color:var(--v); margin:10px 0; font-size:2.5em;">...</h1>
+            <p id="my-role-desc" style="color:#aaa; font-size:0.9em;"></p>
+            <div id="my-status-label" style="margin-top:15px; font-weight:bold; padding:8px; border-radius:5px;"></div>
         </div>
-        
-        <button id="btn-back" class="btn-main hidden" style="background:var(--guide); margin-top:10px;">🔙 กลับหน้า Lobby</button>
+
+        <div id="gm-view" class="hidden">
+            <button id="btn-roll-event" class="btn-main hidden" style="background: var(--guide); margin-bottom: 15px;">🎲 ทอยเหตุการณ์ (2D6)</button>
+            <table class="dashboard-table"><tbody id="gm-table-body"></tbody></table>
+            <button class="btn-main" id="btn-next-phase" style="margin-top:20px;">เปลี่ยนช่วงเวลา ➡️</button>
+            <button class="btn-secondary" id="btn-end-game">🚩 จบเกมและเฉลย</button>
+        </div>
+        <button class="btn-main hidden" id="btn-back-lobby" style="background:var(--guide); margin-top:10px;">🔙 กลับหน้า Lobby</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const eventTable = {
+        2: "เป้าหมายหมาป่าคืนนี้จะกลายเป็นหมาป่าตัวใหม่", 3: "ผู้ถูกกล่าวหา 2 คนถูกกำจัดทันทีไม่ต้องโหวต",
+        4: "วันนี้จะตาย 2 คนแทนปกติ 1 คน", 5: "เฉลยเป้าหมายที่เทพพยากรณ์ตรวจเมื่อคืน",
+        6: "ไม่มีเหตุการณ์พิเศษ", 7: "ไม่มีเหตุการณ์พิเศษ", 8: "ไม่มีเหตุการณ์พิเศษ",
+        9: "ใช้เหตุการณ์เดียวกับเมื่อวาน", 10: "ประหารแบบตัดตัวเลือก (GM กำหนด)",
+        11: "ห้ามทุกคนพูดคุยกัน (ยกเว้นตอนกล่าวหา)", 12: "เป้าหมายหมาป่าไม่ตาย แต่เสียพลังพิเศษถาวร"
+    };
 
     const rolesData = [
         // --- 🛡️ ฝ่ายชาวบ้าน (Human Team) ---
@@ -135,13 +172,10 @@
         { id: 'o6', team: 'other', name: 'ฆาตกรต่อเนื่อง', en: 'Serial Killer', p: -8, desc: 'ตื่นมาฆ่าคนได้ทุกคืน และต้องเหลือรอดเป็นคนสุดท้ายเพื่อชนะ' }
     ];
 
-    const app = initializeApp({
-        apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo",
-        databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app"
-    });
+    const app = initializeApp({ apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo", databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app" });
     const db = getDatabase(app);
 
-    let myName = "", currentRoom = "", players = [], selectedRoles = {};
+    let myName = "", currentRoom = "", players = [], selectedQty = {};
 
     document.getElementById('btn-create').onclick = async () => {
         myName = document.getElementById('username').value.trim();
@@ -154,6 +188,7 @@
     document.getElementById('btn-join').onclick = async () => {
         myName = document.getElementById('username').value.trim();
         currentRoom = document.getElementById('room-code').value.trim();
+        if(!myName || !currentRoom) return;
         await update(ref(db, `rooms/${currentRoom}/players`), {[myName]: true});
         initLobby();
     };
@@ -168,7 +203,9 @@
             if(!data) return;
             const allNames = Object.keys(data.players || {});
             players = allNames.filter(n => n !== data.gm);
-            document.getElementById('player-list').innerHTML = allNames.map(p => `<span class="player-badge">${p} ${p===data.gm?'(GM)':''}</span>`).join(' ');
+            document.getElementById('player-list').innerHTML = allNames.map(p => `
+                <div class="player-badge">${p}${p===data.gm?'<span class="gm-badge">GM</span>':''}</div>
+            `).join('');
             document.getElementById('count-total').innerText = players.length;
 
             if(data.gm === myName) {
@@ -184,48 +221,41 @@
     function renderRoleSelector(saved) {
         const container = document.getElementById('role-selector');
         if(container.innerHTML !== "") return;
-        selectedRoles = saved; 
+        selectedQty = saved;
         const groups = [{id:'human', n:'🛡️ ฝ่ายชาวบ้าน'}, {id:'wolf', n:'🐺 ฝ่ายหมาป่า'}, {id:'other', n:'🔮 ฝ่ายอิสระ'}];
-        
         groups.forEach(g => {
-            const h = document.createElement('div');
-            h.className = `role-group-header group-${g.id}`;
-            h.innerText = g.n;
+            const h = document.createElement('div'); h.className = `role-group-header group-${g.id}`; h.innerText = g.n;
             container.appendChild(h);
-
             rolesData.filter(r => r.team === g.id).forEach(r => {
-                const div = document.createElement('div');
-                div.className = 'role-item';
-                const count = selectedRoles[r.id] || 0;
-                div.innerHTML = `
-                    <span>${r.name} <small>(${r.p>0?'+'+r.p:r.p})</small></span>
+                const div = document.createElement('div'); div.className = 'role-item';
+                const count = selectedQty[r.id] || 0;
+                div.innerHTML = `<span>${r.name} <small>(${r.p>0?'+'+r.p:r.p})</small></span>
                     <div class="qty-controls">
                         <button class="btn-qty" onclick="window.changeQty('${r.id}', -1)">-</button>
-                        <b id="qty-${r.id}">${count}</b>
+                        <b id="qty-${r.id}" class="qty-num">${count}</b>
                         <button class="btn-qty" onclick="window.changeQty('${r.id}', 1)">+</button>
                     </div>`;
                 container.appendChild(div);
             });
         });
-        updateUI();
+        updateQtyUI();
     }
 
     window.changeQty = (id, delta) => {
-        const role = rolesData.find(r => r.id === id);
-        let cur = selectedRoles[id] || 0;
+        let cur = selectedQty[id] || 0;
         cur += delta;
         if(cur < 0) cur = 0;
-        if(!role.multi && cur > 1) cur = 1;
-        selectedRoles[id] = cur;
+        // ปรับให้เพิ่มได้ไม่จำกัดตามคำขอ
+        selectedQty[id] = cur;
         document.getElementById(`qty-${id}`).innerText = cur;
-        updateUI();
+        updateQtyUI();
     };
 
-    function updateUI() {
+    function updateQtyUI() {
         let total = 0, score = 0;
-        for(let id in selectedRoles) {
-            total += selectedRoles[id];
-            score += (selectedRoles[id] * rolesData.find(r => r.id === id).p);
+        for(let id in selectedQty) {
+            total += selectedQty[id];
+            score += (selectedQty[id] * rolesData.find(r => r.id === id).p);
         }
         const label = document.getElementById('count-sel');
         label.innerText = total;
@@ -235,69 +265,94 @@
 
     document.getElementById('btn-start-game').onclick = () => {
         let final = [];
-        for(let id in selectedRoles) {
-            for(let i=0; i<selectedRoles[id]; i++) final.push(rolesData.find(r => r.id === id));
-        }
-        if(final.length !== players.length) return alert(`บทบาทไม่พอดี! (เลือก ${final.length} แต่คนเล่นมี ${players.length})`);
+        for(let id in selectedQty) { for(let i=0; i<selectedQty[id]; i++) final.push(rolesData.find(r => r.id === id)); }
+        if(final.length !== players.length) return alert(`จำนวนบทบาท (${final.length}) ไม่ตรงกับผู้เล่น (${players.length})`);
         
         let shuffled = final.sort(() => Math.random() - 0.5);
         let gameData = {};
-        players.forEach((p, i) => { gameData[p] = { role: shuffled[i].name, status: 'normal' }; });
-
-        update(ref(db, 'rooms/' + currentRoom), { status: 'playing', gameData, phase: 0, lastSelected: selectedRoles });
+        players.forEach((p, i) => { gameData[p] = { role: shuffled[i].name, desc: shuffled[i].desc, status: 'normal' }; });
+        update(ref(db, 'rooms/' + currentRoom), { status: 'playing', gameData, phase: 0, lastSelected: selectedQty, useEvents: document.getElementById('use-event-system').checked, currentEvent: 0, eventRolling: false });
     };
 
     function renderGame(data) {
         document.getElementById('screen-lobby').classList.add('hidden');
         document.getElementById('screen-game').classList.remove('hidden');
-        const phases = ["กลางคืน 🌙", "กลางวัน ☀️", "โหวต ⚖️"];
+        const phases = [{n:"กลางคืน 🌙", b:"#1e3799", c:"night"}, {n:"กลางวัน ☀️", b:"#f39c12", c:"day"}, {n:"โหวต ⚖️", b:"#e74c3c", c:"vote"}];
+        document.body.className = phases[data.phase].c;
         const pLabel = document.getElementById('phase-label');
-        pLabel.innerText = phases[data.phase];
-        pLabel.style.background = ["#1e3799", "#f39c12", "#e74c3c"][data.phase];
+        pLabel.innerText = phases[data.phase].n; pLabel.style.background = phases[data.phase].b;
+
+        const evText = document.getElementById('event-text');
+        if(data.useEvents) {
+            document.getElementById('event-display').classList.remove('hidden');
+            if(data.eventRolling) {
+                evText.innerText = "🎲 กำลังทอยเต๋า...";
+                evText.className = "event-rolling";
+            } else if(data.currentEvent > 0) {
+                evText.innerText = `แต้ม ${data.currentEvent}: ${eventTable[data.currentEvent]}`;
+                evText.className = "";
+            } else {
+                evText.innerText = "รอ GM ทอยเหตุการณ์";
+            }
+        } else { document.getElementById('event-display').classList.add('hidden'); }
 
         if(data.gm === myName) {
+            document.getElementById('stats-container').classList.remove('hidden');
             document.getElementById('gm-view').classList.remove('hidden');
             document.getElementById('player-view').classList.add('hidden');
-            document.getElementById('gm-player-list').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
-                <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #333;">
-                    <span>${p} <small>(${info.role})</small></span>
-                    <select onchange="window.updSt('${p}', this.value)" style="width:auto; margin:0; padding:2px;">
-                        <option value="normal" ${info.status==='normal'?'selected':''}>ปกติ</option>
-                        <option value="dead" ${info.status==='dead'?'selected':''}>ตาย</option>
-                    </select>
-                </div>`).join('');
+            const pArr = Object.values(data.gameData || {});
+            document.getElementById('stat-total').innerText = pArr.length;
+            document.getElementById('stat-live').innerText = pArr.filter(p => p.status === 'normal' || p.status === 'muted').length;
+            document.getElementById('stat-dead').innerText = pArr.filter(p => p.status === 'dead' || p.status === 'exiled').length;
+            if(data.useEvents) document.getElementById('btn-roll-event').classList.remove('hidden');
+            renderGMTable(data);
         } else {
             const info = data.gameData[myName];
-            document.getElementById('my-role').innerText = info.role;
-            document.getElementById('my-status').innerText = info.status === 'dead' ? "💀 คุณตายแล้ว" : "🟢 ยังมีชีวิต";
+            document.getElementById('my-role-name').innerText = info.role;
+            document.getElementById('my-role-desc').innerText = info.desc;
+            const stMap = { dead: "💀 ตายแล้ว", muted: "🤫 ถูกใบ้", exiled: "⚖️ ถูกเนรเทศ", normal: "🟢 มีชีวิต" };
+            const stLabel = document.getElementById('my-status-label');
+            stLabel.innerText = stMap[info.status] || "🟢 มีชีวิต";
+            stLabel.style.color = info.status === 'normal' ? 'var(--v)' : '#ff4b2b';
         }
 
-        if(data.event) {
-            document.getElementById('event-display').classList.remove('hidden');
-            document.getElementById('event-display').innerText = `🎲 เหตุการณ์: ${data.event}`;
-        }
+        if(data.status === 'ended') document.getElementById('btn-back-lobby').classList.remove('hidden');
+    }
 
-        if(data.status === 'ended') document.getElementById('btn-back').classList.remove('hidden');
+    function renderGMTable(data) {
+        document.getElementById('gm-table-body').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
+            <tr>
+                <td><span class="name-${info.status}">${p}</span><br><small style="opacity:0.5">${info.role}</small></td>
+                <td><select onchange="window.updSt('${p}', this.value)">
+                    <option value="normal" ${info.status==='normal'?'selected':''}>ปกติ</option>
+                    <option value="dead" ${info.status==='dead'?'selected':''}>ตาย</option>
+                    <option value="muted" ${info.status==='muted'?'selected':''}>ใบ้</option>
+                    <option value="exiled" ${info.status==='exiled'?'selected':''}>เนรเทศ</option>
+                </select></td>
+            </tr>`).join('');
     }
 
     window.updSt = (p, s) => update(ref(db, `rooms/${currentRoom}/gameData/${p}`), { status: s });
-    
-    document.getElementById('btn-roll').onclick = () => {
-        const res = (Math.floor(Math.random()*6)+1) + (Math.floor(Math.random()*6)+1);
-        update(ref(db, `rooms/${currentRoom}`), { event: res });
+
+    document.getElementById('btn-roll-event').onclick = async () => {
+        // ขั้นตอนที่ 1: ตั้งสถานะกำลังทอย
+        await update(ref(db, `rooms/${currentRoom}`), { eventRolling: true });
+        
+        // ขั้นตอนที่ 2: หน่วงเวลา 1.5 วินาที
+        setTimeout(async () => {
+            const res = (Math.floor(Math.random()*6)+1) + (Math.floor(Math.random()*6)+1);
+            await update(ref(db, `rooms/${currentRoom}`), { currentEvent: res, eventRolling: false });
+        }, 1500);
     };
 
-    document.getElementById('btn-next').onclick = () => {
-        onValue(ref(db, `rooms/${currentRoom}/phase`), (s) => {
-            update(ref(db, 'rooms/' + currentRoom), { phase: (s.val() + 1) % 3 });
+    document.getElementById('btn-next-phase').onclick = () => {
+        onValue(ref(db, `rooms/${currentRoom}/phase`), (s) => { 
+            update(ref(db, 'rooms/' + currentRoom), { phase: (s.val() + 1) % 3, currentEvent: 0 }); 
         }, { onlyOnce: true });
     };
 
-    document.getElementById('btn-end').onclick = () => update(ref(db, 'rooms/' + currentRoom), { status: 'ended' });
-    
-    document.getElementById('btn-back').onclick = () => {
-        update(ref(db, 'rooms/' + currentRoom), { status: 'waiting', event: null });
-    };
+    document.getElementById('btn-end-game').onclick = () => { if(confirm("เฉลยบทบาทและจบเกม?")) update(ref(db, 'rooms/' + currentRoom), { status: 'ended' }); };
+    document.getElementById('btn-back-lobby').onclick = () => { update(ref(db, 'rooms/' + currentRoom), { status: 'waiting', currentEvent: 0 }); };
 </script>
 </body>
 </html>
