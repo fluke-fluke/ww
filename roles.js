@@ -46,4 +46,3 @@ export const rolesData = [
     { id: 'e4', team: 'other', name: 'มือระเบิด', en: 'Mad Bomber', p: -2, desc: 'ตายแล้วระเบิดข้างๆ' }
 ];
 
-
