@@ -8,129 +8,23 @@
     --exile: #8e44ad;
     --cupid: #ff69b4;
 }
-
-body {
-    font-family: 'Kanit', sans-serif;
-    background: var(--bg);
-    color: #e0e0e0;
-    margin: 0;
-    padding: 15px;
-    display: flex;
-    justify-content: center;
-    transition: background 0.5s ease;
-}
-
-/* Background Phase Colors */
+body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 10px; display: flex; justify-content: center; transition: 0.5s; }
 body.night { background: #0a0a2e; }
 body.day { background: #4a3300; }
 body.vote { background: #3d0000; }
-
 .container { width: 100%; max-width: 600px; }
-
-.card {
-    background: var(--card);
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    border: 1px solid #333;
-    margin-bottom: 15px;
-}
-
+.card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; margin-bottom: 15px; }
 .hidden { display: none !important; }
-
-/* Buttons & Inputs */
-input, select {
-    width: 100%;
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 8px;
-    border: 1px solid #333;
-    background: #252535;
-    color: white;
-    box-sizing: border-box;
-}
-
-button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.2s;
-    margin: 5px 0;
-    font-family: 'Kanit';
-}
-
+input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252535; color: white; box-sizing: border-box; }
+button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 5px 0; font-family: 'Kanit'; }
 .btn-main { background: var(--primary); color: white; }
-
-/* Role Selection Groups */
-.role-group-header {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 10px 15px;
-    margin-top: 20px;
-    font-size: 0.9em;
-    font-weight: bold;
-    border-radius: 8px;
-    border-left: 4px solid #fff;
-}
+.role-group-header { background: rgba(255,255,255,0.05); padding: 8px 15px; margin-top: 15px; font-size: 0.9em; font-weight: bold; border-radius: 8px; border-left: 4px solid #fff; }
 .group-human { border-left-color: var(--v); color: var(--v); }
 .group-wolf { border-left-color: var(--w); color: var(--w); }
 .group-other { border-left-color: #b06ab3; color: #b06ab3; }
-
-.role-list {
-    max-height: 400px;
-    overflow-y: auto;
-    margin: 10px 0;
-    padding: 5px;
-}
-
-.role-item {
-    display: flex;
-    padding: 12px;
-    border-bottom: 1px solid #222;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.role-item.selected {
-    background: rgba(255, 46, 99, 0.15);
-    border-radius: 10px;
-}
-
-.role-top { display: flex; justify-content: space-between; font-weight: bold; width: 100%; }
-.role-en { font-size: 0.75em; color: #666; margin-left: 5px; }
-.p-plus { color: var(--v); }
-.p-minus { color: var(--w); }
-
-/* GM Dashboard */
-.dashboard-table { width: 100%; border-collapse: collapse; }
-.dashboard-table td { padding: 12px 8px; border-bottom: 1px solid #222; font-size: 0.85em; }
-
-.st-dead { color: var(--w); text-decoration: line-through; opacity: 0.5; }
-.st-muted { color: var(--mute); font-weight: bold; }
-.st-exiled { color: var(--exile); font-weight: bold; }
-
-.couple-active { border: 2px solid var(--cupid) !important; position: relative; }
-.btn-link { background: var(--cupid); color: white; width: auto; padding: 4px 8px; font-size: 0.7em; }
-
-.phase-banner {
-    text-align: center;
-    font-weight: bold;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    color: white;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-}
-
-.player-badge {
-    background: #252535;
-    padding: 6px 12px;
-    border-radius: 8px;
-    margin: 4px;
-    display: inline-block;
-    border: 1px solid #444;
-}
-
-.gm-badge { background: #ffd700; color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.7em; margin-left: 5px; vertical-align: middle; }
+.role-item { display: flex; padding: 12px; border-bottom: 1px solid #222; cursor: pointer; }
+.role-item.selected { background: rgba(255, 46, 99, 0.2); border-radius: 10px; }
+.role-top { display: flex; justify-content: space-between; width: 100%; font-weight: bold; }
+.p-plus { color: var(--v); } .p-minus { color: var(--w); }
+.player-badge { background: #252535; padding: 6px 12px; border-radius: 8px; margin: 4px; display: inline-block; border: 1px solid #444; }
+.phase-banner { text-align: center; font-weight: bold; padding: 15px; border-radius: 12px; margin-bottom: 15px; color: white; }
