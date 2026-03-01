@@ -65,11 +65,21 @@
             <h2 style="margin:0;">ROOM: <span id="display-room" style="color:var(--primary)">----</span></h2>
             <button class="btn-main" style="width:auto; margin:0; padding:8px 15px; font-size:0.9em; background:var(--guide);" onclick="window.open('rulesofww.pdf', '_blank')">📖 กฎและบทบาท</button>
         </div>
+        
         <div id="player-list" style="margin-bottom: 20px;"></div>
+
         <div id="gm-setup" class="hidden">
+            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                <label style="font-size: 0.9em; opacity: 0.8;">โอนยศ GM ให้ผู้เล่นคนอื่น:</label>
+                <select id="select-gm" onchange="window.transferGM(this.value)" style="margin-bottom:0;">
+                    <option value="">-- เลือกผู้เล่นที่จะเป็น GM --</option>
+                </select>
+            </div>
+
             <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
                 <label style="display:flex; align-items:center; cursor:pointer;"><input type="checkbox" id="use-events" style="width:auto; margin-right:10px;"> ใช้งานระบบเหตุการณ์ 🎲</label>
             </div>
+
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3 style="margin:0;">จัดบทบาท (<span id="count-sel">0</span>/<span id="count-total">0</span>)</h3>
                 <div id="balance-score" style="font-weight:bold;">แต้มสมดุล: 0</div>
@@ -166,15 +176,13 @@
         { id: 'o6', team: 'other', name: 'ฆาตกรต่อเนื่อง', en: 'Serial Killer', p: -8, desc: 'ตื่นมาฆ่าคนได้ทุกคืน และต้องเหลือรอดเป็นคนสุดท้ายเพื่อชนะ' }
     ];
 
-    const eventTable = { 2:"เหยื่อกลายเป็นหมาป่า", 3:"กำจัด 2 คนไม่ต้องโหวต", 4:"กำจัด 2 คนวันนี้", 5:"เฉลย Seer เช็คใคร", 6:"ปกติ", 7:"ปกติ", 8:"ปกติ", 9:"เหตุการณ์เดิม", 10:"GM ตัดตัวเลือก", 11:"ห้ามพูด", 12:"เหยื่อเสียพลังถาวร" };
-
     const app = initializeApp({ apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo", databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app" });
     const db = getDatabase(app);
     let myName = "", currentRoom = "", players = [], selectedQty = {};
 
     document.getElementById('btn-create').onclick = async () => {
         myName = document.getElementById('username').value.trim();
-        if(!myName) return;
+        if(!myName) return alert("ใส่ชื่อด้วย");
         currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
         await set(ref(db, 'rooms/' + currentRoom), { status: 'waiting', gm: myName, players: {[myName]: true}, phase: 0 });
         initLobby();
@@ -183,7 +191,7 @@
     document.getElementById('btn-join').onclick = async () => {
         myName = document.getElementById('username').value.trim();
         currentRoom = document.getElementById('room-code').value.trim();
-        if(!myName || !currentRoom) return;
+        if(!myName || !currentRoom) return alert("ข้อมูลไม่ครบ");
         await update(ref(db, `rooms/${currentRoom}/players`), {[myName]: true});
         initLobby();
     };
@@ -197,7 +205,7 @@
             const data = snap.val(); if(!data) return;
             const all = Object.keys(data.players || {});
             players = all.filter(n => n !== data.gm);
-            // แสดงชื่อทุกคนรวมถึง GM
+            
             document.getElementById('player-list').innerHTML = all.map(p => `<div class="player-badge">${p}${p===data.gm?'<span class="gm-badge">GM</span>':''}</div>`).join('');
             document.getElementById('count-total').innerText = players.length;
 
@@ -205,7 +213,16 @@
                 document.getElementById('gm-setup').classList.remove('hidden');
                 document.getElementById('wait-msg').classList.add('hidden');
                 renderRoleSelector(data.lastSelected || {});
+                
+                // อัปเดต Dropdown เลือก GM (ให้มีแต่ชื่อเพื่อน)
+                const selectGM = document.getElementById('select-gm');
+                selectGM.innerHTML = '<option value="">-- โอนยศ GM ให้ผู้เล่นอื่น --</option>' + 
+                    players.map(p => `<option value="${p}">${p}</option>`).join('');
+            } else {
+                document.getElementById('gm-setup').classList.add('hidden');
+                document.getElementById('wait-msg').classList.remove('hidden');
             }
+
             if(data.status === 'playing') renderGame(data);
             else if(data.status === 'ended') renderResult(data);
             else if(data.status === 'waiting') {
@@ -215,6 +232,14 @@
             }
         });
     }
+
+    // ฟังก์ชันโอน GM
+    window.transferGM = (newGM) => {
+        if(!newGM) return;
+        if(confirm(`ต้องการมอบตำแหน่ง GM ให้กับคุณ ${newGM} หรือไม่? (คุณจะกลับไปเป็นผู้เล่นปกติ)`)) {
+            update(ref(db, 'rooms/' + currentRoom), { gm: newGM });
+        }
+    };
 
     function renderRoleSelector(saved) {
         const container = document.getElementById('role-selector');
@@ -257,7 +282,7 @@
     document.getElementById('btn-start-game').onclick = () => {
         let final = [];
         for(let id in selectedQty) for(let i=0; i<selectedQty[id]; i++) final.push(rolesData.find(r => r.id === id));
-        if(final.length !== players.length) return alert(`จำนวนบทบาทไม่ตรงกับผู้เล่น!`);
+        if(final.length !== players.length) return alert(`บทบาทไม่ครบตามจำนวนผู้เล่น!`);
         let shuffled = final.sort(() => Math.random() - 0.5);
         let gameData = {};
         players.forEach((p, i) => { gameData[p] = { role: shuffled[i].name, en: shuffled[i].en, desc: shuffled[i].desc, status: 'normal', isLinked: false, inCult: false }; });
@@ -276,6 +301,8 @@
             document.getElementById('stats-container').classList.remove('hidden');
             renderGMTable(data);
         } else {
+            document.getElementById('gm-view').classList.add('hidden');
+            document.getElementById('player-view').classList.remove('hidden');
             const info = data.gameData[myName];
             document.getElementById('my-role').innerText = info.role;
             document.getElementById('my-desc').innerText = info.desc;
@@ -329,6 +356,13 @@
     document.getElementById('btn-gm-back').onclick = () => update(ref(db, `rooms/${currentRoom}`), { status: 'waiting' });
     document.getElementById('btn-next').onclick = () => {
         onValue(ref(db, `rooms/${currentRoom}/phase`), (s) => { update(ref(db, `rooms/${currentRoom}`), { phase: (s.val() + 1) % 3 }); }, { onlyOnce: true });
+    };
+    document.getElementById('btn-roll').onclick = () => {
+        update(ref(db, `rooms/${currentRoom}`), { eventRolling: true });
+        setTimeout(() => {
+            const res = (Math.floor(Math.random()*6)+1) + (Math.floor(Math.random()*6)+1);
+            update(ref(db, `rooms/${currentRoom}`), { currentEvent: res, eventRolling: false });
+        }, 1500);
     };
 </script>
 </body>
