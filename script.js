@@ -104,7 +104,7 @@ function renderRoleSelector(saved) {
             div.innerHTML = `
                 <div>
                     <b>${r.name}</b> <small>(${r.en})</small>
-                    ${isSpecial ? '<span style="color:var(--drunk);font-size:0.8em;"> ⭐ ไม่นับ slot</span>' : ''}
+                    ${isSpecial ? '<span style="color:var(--drunk);font-size:0.8em;"> ⭐ ไม่นับ slot บทบาท</span>' : ''}
                     <br><span style="font-size:0.8em; color:${r.p < 0 ? 'var(--w)' : r.p > 0 ? 'var(--v)' : '#aaa'}">
                         ${r.p > 0 ? '+' + r.p : r.p === 0 ? '0' : r.p} แต้ม
                     </span>
