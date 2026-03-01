@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>WEREWOLF ONLINE PRO</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -19,13 +19,15 @@
             --cult: #b06ab3;
         }
 
-        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 10px; display: flex; justify-content: center; }
+        /* touch-action ช่วยป้องกันการดับเบิ้ลแท็บแล้วซูมในมือถือ */
+        body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 10px; display: flex; justify-content: center; touch-action: manipulation; }
         .container { width: 100%; max-width: 600px; }
         .card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; position: relative; }
         .hidden { display: none !important; }
 
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252535; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 5px 0; transition: 0.2s; }
+        /* font-size: 16px สำคัญมาก! ช่วยไม่ให้ iPhone ซูมเข้าอัตโนมัติเวลากดพิมพ์ */
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252535; color: white; box-sizing: border-box; font-size: 16px; touch-action: manipulation; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 5px 0; transition: 0.2s; font-size: 16px; touch-action: manipulation; }
         .btn-main { background: var(--primary); color: white; }
         .btn-secondary { background: #333; color: white; }
 
@@ -61,6 +63,11 @@
         .name-muted { color: var(--mute); font-weight: bold; }
         
         .btn-action { padding: 8px; border-radius: 6px; font-size: 1em; width: auto; min-width: 40px; margin: 2px; }
+
+        /* Reveal Screen */
+        .reveal-list { text-align: left; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-top: 15px; border: 1px solid #333; }
+        .reveal-item { padding: 10px 0; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        .reveal-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -98,35 +105,43 @@
     </div>
 
     <div id="screen-game" class="card hidden">
-        <div id="phase-label" style="text-align:center; font-weight:bold; padding:12px; border-radius:12px; margin-bottom:15px; color:white; font-size:1.2em;"></div>
-        
-        <div id="event-display" class="hidden" style="background: rgba(0, 173, 181, 0.1); border: 1px solid var(--guide); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
-            <div id="event-text" style="font-weight: bold; font-size: 1.05em;"></div>
+        <div id="game-active-area">
+            <div id="phase-label" style="text-align:center; font-weight:bold; padding:12px; border-radius:12px; margin-bottom:15px; color:white; font-size:1.2em;"></div>
+            
+            <div id="event-display" class="hidden" style="background: rgba(0, 173, 181, 0.1); border: 1px solid var(--guide); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
+                <div id="event-text" style="font-weight: bold; font-size: 1.05em;"></div>
+            </div>
+
+            <div id="stats-container" class="game-stats hidden">
+                <span style="color:var(--v)">รอด: <b id="stat-live">0</b></span>
+                <span style="color:var(--w)">ตาย: <b id="stat-dead">0</b></span>
+                <span id="cult-stat-box" class="hidden" style="color:var(--cult)">ลัทธิ: <b id="stat-cult">0</b></span>
+            </div>
+
+            <div id="gm-view" class="hidden">
+                <button id="btn-roll" class="btn-main hidden" style="background:var(--guide); margin-bottom:15px;">🎲 ทอยเหตุการณ์ประจำวัน</button>
+                <table class="dashboard-table">
+                    <tbody id="gm-table-body"></tbody>
+                </table>
+                <button class="btn-main" id="btn-next" style="margin-top:20px;">เปลี่ยนช่วงเวลา ➡️</button>
+                <button class="btn-secondary" id="btn-end" style="margin-top:10px;">🚩 จบเกมและเฉลยบทบาท</button>
+            </div>
+
+            <div id="player-view" class="hidden" style="text-align:center; padding:30px 10px;">
+                <p style="margin:0; opacity:0.7;">บทบาทของคุณคือ</p>
+                <h1 id="my-role" style="color:var(--v); font-size:2.8em; margin:15px 0;">...</h1>
+                <p id="my-desc" style="color:#aaa; font-size:0.95em; line-height:1.4;"></p>
+                <div id="my-status" style="margin-top:20px; font-size:1.2em; font-weight:bold;"></div>
+            </div>
         </div>
 
-        <div id="stats-container" class="game-stats hidden">
-            <span style="color:var(--v)">รอด: <b id="stat-live">0</b></span>
-            <span style="color:var(--w)">ตาย: <b id="stat-dead">0</b></span>
-            <span id="cult-stat-box" class="hidden" style="color:var(--cult)">ลัทธิ: <b id="stat-cult">0</b></span>
+        <div id="reveal-view" class="hidden" style="text-align:center; padding:10px;">
+            <h2 style="color:var(--primary); margin-top:0;">🚩 สิ้นสุดเกม!</h2>
+            <p>ความจริงได้เปิดเผยแล้ว นี่คือบทบาทของทุกคน</p>
+            <div id="reveal-list" class="reveal-list"></div>
         </div>
 
-        <div id="gm-view" class="hidden">
-            <button id="btn-roll" class="btn-main hidden" style="background:var(--guide); margin-bottom:15px;">🎲 ทอยเหตุการณ์ประจำวัน</button>
-            <table class="dashboard-table">
-                <tbody id="gm-table-body"></tbody>
-            </table>
-            <button class="btn-main" id="btn-next" style="margin-top:20px;">เปลี่ยนช่วงเวลา ➡️</button>
-            <button class="btn-secondary" id="btn-end" style="margin-top:10px;">🚩 จบเกมและเฉลยบทบาท</button>
-        </div>
-
-        <div id="player-view" style="text-align:center; padding:30px 10px;">
-            <p style="margin:0; opacity:0.7;">บทบาทของคุณคือ</p>
-            <h1 id="my-role" style="color:var(--v); font-size:2.8em; margin:15px 0;">...</h1>
-            <p id="my-desc" style="color:#aaa; font-size:0.95em; line-height:1.4;"></p>
-            <div id="my-status" style="margin-top:20px; font-size:1.2em; font-weight:bold;"></div>
-        </div>
-
-        <button id="btn-back" class="btn-main hidden" style="background:var(--guide); margin-top:15px;">🔙 กลับหน้าล็อบบี้</button>
+        <button id="btn-back" class="btn-main hidden" style="background:var(--guide); margin-top:20px;">🔙 พาผู้เล่นกลับหน้าล็อบบี้</button>
     </div>
 </div>
 
@@ -290,6 +305,35 @@
     function renderGame(data) {
         document.getElementById('screen-lobby').classList.add('hidden');
         document.getElementById('screen-game').classList.remove('hidden');
+
+        // หากเกมจบแล้ว (หน้าเฉลย)
+        if (data.status === 'ended') {
+            document.getElementById('game-active-area').classList.add('hidden');
+            document.getElementById('reveal-view').classList.remove('hidden');
+            
+            // สร้างรายชื่อเฉลยบทบาท
+            document.getElementById('reveal-list').innerHTML = Object.entries(data.gameData).map(([p, info]) => {
+                const stIcon = { dead: "💀", muted: "🤫", exiled: "⚖️", normal: "🟢" }[info.status];
+                return `<div class="reveal-item">
+                    <span>${stIcon} <b>${p}</b></span>
+                    <span style="color:var(--v); font-weight:bold;">${info.role}</span>
+                </div>`;
+            }).join('');
+
+            // ปุ่มกลับโชว์เฉพาะ GM
+            if (data.gm === myName) {
+                document.getElementById('btn-back').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-back').classList.add('hidden');
+            }
+            return; // หยุดการทำงานส่วนอื่น
+        }
+
+        // หากเกมกำลังเล่นอยู่ (ปกติ)
+        document.getElementById('game-active-area').classList.remove('hidden');
+        document.getElementById('reveal-view').classList.add('hidden');
+        document.getElementById('btn-back').classList.add('hidden');
+
         const phases = [{n:"คืนมืดมิด 🌙 (Night)", b:"#1e3799"}, {n:"เช้าวันใหม่ ☀️ (Day)", b:"#f39c12"}, {n:"เวลาโหวต ⚖️ (Vote)", b:"#e74c3c"}];
         const pLab = document.getElementById('phase-label');
         pLab.innerText = phases[data.phase].n; pLab.style.background = phases[data.phase].b;
@@ -316,6 +360,8 @@
             if(data.useEvents) document.getElementById('btn-roll').classList.remove('hidden');
             renderGMTable(data);
         } else {
+            document.getElementById('gm-view').classList.add('hidden');
+            document.getElementById('player-view').classList.remove('hidden');
             const info = data.gameData[myName];
             document.getElementById('my-role').innerText = `${info.role} (${info.en})`;
             document.getElementById('my-desc').innerText = info.desc;
@@ -323,7 +369,6 @@
             document.getElementById('my-status').innerText = stMap[info.status];
             document.getElementById('my-status').style.color = (info.status==='normal'?'var(--v)':'var(--w)');
         }
-        if(data.status === 'ended') document.getElementById('btn-back').classList.remove('hidden');
     }
 
     function renderGMTable(data) {
@@ -370,6 +415,8 @@
     };
 
     document.getElementById('btn-end').onclick = () => { if(confirm("ต้องการจบเกมและเฉลยทุกบทบาท?")) update(ref(db, `rooms/${currentRoom}`), { status: 'ended' }); };
+    
+    // ปุ่มนี้เฉพาะ GM ที่เห็น และจะรันเมื่อกดเพื่อพาทุกคนกลับล็อบบี้
     document.getElementById('btn-back').onclick = () => update(ref(db, `rooms/${currentRoom}`), { status: 'waiting', currentEvent: 0 });
 </script>
 </body>
