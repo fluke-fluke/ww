@@ -99,21 +99,29 @@ function renderRoleSelector(saved) {
 
         rolesData.filter(r => r.team === g.id).forEach(r => {
             const isSpecial = !!r.special;
+            // max=0 หมายถึงไม่จำกัด, max=1 หมายถึงจำกัด 1
+            const hardMax = isSpecial ? 1 : (r.max === 0 ? 999 : r.max);
+            const maxLabel = (r.max === 0 && !isSpecial) ? '∞' : String(r.max || 1);
+            const qty = selectedQty[r.id] || 0;
+
             const div = document.createElement('div');
             div.className = 'role-item';
             div.innerHTML = `
                 <div>
                     <b>${r.name}</b> <small>(${r.en})</small>
-                    ${isSpecial ? '<span style="color:var(--drunk);font-size:0.8em;"> ⭐ ไม่นับ slot บทบาท</span>' : ''}
+                    ${isSpecial ? '<span style="color:var(--drunk);font-size:0.8em;"> ⭐ ไม่นับ slot</span>' : ''}
                     <br><span style="font-size:0.8em; color:${r.p < 0 ? 'var(--w)' : r.p > 0 ? 'var(--v)' : '#aaa'}">
                         ${r.p > 0 ? '+' + r.p : r.p === 0 ? '0' : r.p} แต้ม
                     </span>
                     <br><span style="font-size:0.75em; color:#888;">${r.desc}</span>
                 </div>
                 <div class="qty-controls">
-                    <button class="btn-qty" onclick="window.changeQty('${r.id}', -1, ${isSpecial ? 1 : 999})">-</button>
-                    <b id="qty-${r.id}" class="qty-num">${selectedQty[r.id] || 0}</b>
-                    <button class="btn-qty" onclick="window.changeQty('${r.id}', 1, ${isSpecial ? 1 : 999})">+</button>
+                    <button class="btn-qty" onclick="window.changeQty('${r.id}', -1, ${hardMax})">-</button>
+                    <span id="qty-wrap-${r.id}" style="display:flex; flex-direction:column; align-items:center; min-width:38px;">
+                        <b id="qty-${r.id}" class="qty-num">${qty}</b>
+                        <span style="font-size:0.65em; color:#888; line-height:1;">${qty}/${maxLabel}</span>
+                    </span>
+                    <button class="btn-qty" onclick="window.changeQty('${r.id}', 1, ${hardMax})">+</button>
                 </div>`;
             container.appendChild(div);
         });
@@ -124,7 +132,17 @@ function renderRoleSelector(saved) {
 
 window.changeQty = (id, d, max = 999) => {
     selectedQty[id] = Math.min(max, Math.max(0, (selectedQty[id] || 0) + d));
-    document.getElementById(`qty-${id}`).innerText = selectedQty[id];
+    const qty = selectedQty[id];
+    document.getElementById(`qty-${id}`).innerText = qty;
+    // อัปเดต label qty/max
+    const wrap = document.getElementById(`qty-wrap-${id}`);
+    if (wrap) {
+        const label = wrap.querySelector('span');
+        if (label) {
+            const maxLabel = max >= 999 ? '∞' : String(max);
+            label.innerText = `${qty}/${maxLabel}`;
+        }
+    }
     updateQtyUI();
 };
 
@@ -163,7 +181,7 @@ document.getElementById('btn-start-game').onclick = () => {
         gameData[p] = {
             role:          isDrunk ? 'ขี้เมา'    : shuffled[i].name,
             en:            isDrunk ? 'Drunk'      : shuffled[i].en,
-            desc:          isDrunk ? 'เป็นขี้เมาในสองคืนแรก คืนที่สามจะรู้ว่าที่จริงแล้วเป็นอะไร (อาจจะเป็นประธานบริษัท)' : shuffled[i].desc,
+            desc:          isDrunk ? 'คุณเมาและไม่รู้บทบาทที่แท้จริงของตัวเอง! รอ GM เปิดเผย...' : shuffled[i].desc,
             status:        'normal',
             isLinked:      false,
             inCult:        false,
