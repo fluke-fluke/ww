@@ -33,7 +33,7 @@
 
         .role-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; }
         .qty-controls { display: flex; align-items: center; gap: 15px; }
-        .btn-qty { width: 38px; height: 38px; background: #333; color: white; border-radius: 8px; font-size: 1.3em; display: flex; border: 1px solid #444; justify-content: center; align-items: center; }
+        .btn-qty { width: 38px; height: 38px; background: #333; color: white; border-radius: 8px; font-size: 1.3em; display: flex; justify-content: center; align-items: center; border: 1px solid #444; }
         .qty-num { min-width: 25px; text-align: center; font-weight: bold; font-size: 1.2em; }
 
         .player-badge { background: #252535; padding: 8px 14px; border-radius: 10px; margin: 5px; display: inline-block; border: 1px solid #444; }
@@ -46,66 +46,76 @@
         .btn-action { padding: 8px; border-radius: 6px; font-size: 1em; width: auto; min-width: 40px; margin: 2px; border: none; cursor: pointer; color: white; }
 
         #event-display { background: rgba(0, 173, 181, 0.25); border: 2px solid var(--guide); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; }
+        #event-text { font-size: 1.1em; line-height: 1.5; color: #fff; }
+        
         .rolling { animation: blink 0.5s infinite; color: var(--guide) !important; font-weight: bold; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        .btn-eye { background: #444; border: 1px solid #666; color: #fff; padding: 4px 8px; font-size: 0.9em; width: auto; margin-left: 5px; cursor: pointer; border-radius: 4px; }
-        .drunk-label { color: #f39c12; font-style: italic; font-size: 0.8em; display: block; }
+        .btn-eye { background: #444; border: 1px solid #666; color: #fff; padding: 2px 6px; font-size: 0.8em; width: auto; margin-left: 5px; cursor: pointer; border-radius: 4px; vertical-align: middle; }
+        .drunk-badge { color: #f39c12; font-size: 0.75em; font-weight: normal; display: block; margin-top: 2px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="screen-auth" class="card">
-        <h1 style="text-align:center; color:var(--primary);">WEREWOLF 🐺</h1>
+        <h1 style="text-align:center; color:var(--primary); margin-bottom:20px;">WEREWOLF 🐺</h1>
         <input type="text" id="username" placeholder="ชื่อของคุณ">
         <input type="text" id="room-code" placeholder="รหัสห้อง 4 หลัก">
-        <button class="btn-main" id="btn-create">สร้างห้อง (HOST)</button>
-        <button class="btn-secondary" id="btn-join">เข้าร่วมห้อง</button>
+        <button class="btn-main" id="btn-create">สร้างห้องใหม่ (HOST)</button>
+        <button class="btn-secondary" id="btn-join">เข้าร่วมห้องเพื่อน</button>
     </div>
 
     <div id="screen-lobby" class="card hidden">
-        <h2 style="margin:0;">ROOM: <span id="display-room" style="color:var(--primary)">----</span></h2>
-        <div id="player-list" style="margin: 15px 0;"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0;">ROOM: <span id="display-room" style="color:var(--primary)">----</span></h2>
+        </div>
+        <div id="player-list" style="margin-bottom: 20px;"></div>
         
         <div id="gm-setup" class="hidden">
             <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
-                <label style="font-size: 0.85em;">โอน GM:</label>
+                <label style="font-size: 0.85em; opacity: 0.7;">โอน GM:</label>
                 <select id="select-gm" onchange="window.transferGM(this.value)"></select>
                 <label style="display:flex; align-items:center; cursor:pointer; margin-top:10px;"><input type="checkbox" id="use-events" style="width:auto; margin-right:10px;"> ใช้งานระบบเหตุการณ์ 🎲</label>
             </div>
+            
             <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
                 <h3 style="margin:0;">บทบาท: <span id="count-sel">0</span> / <span id="count-total">0</span></h3>
                 <div id="balance-score" style="font-weight:bold; color:var(--guide);">แต้มสมดุล: 0</div>
             </div>
-            <div id="role-selector" style="max-height: 350px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; border-radius: 10px;"></div>
-            <button class="btn-main" id="btn-start-game" style="background:var(--v); color:#000; margin-top:15px;">เริ่มเกม 🏁</button>
+            
+            <div id="role-selector" style="max-height: 380px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; border-radius: 10px;"></div>
+            <button class="btn-main" id="btn-start-game" style="background:var(--v); color:#000; margin-top:20px;">เริ่มเกมเดี๋ยวนี้ 🏁</button>
         </div>
         <p id="wait-msg" style="text-align:center; color:#888;">⏳ รอ GM เริ่มเกม...</p>
     </div>
 
     <div id="screen-game" class="card hidden">
         <div id="phase-label" style="text-align:center; font-weight:bold; padding:12px; border-radius:12px; margin-bottom:15px; color:white;"></div>
-        <div id="event-display" class="hidden"><div id="event-text"></div></div>
-
-        <div id="gm-view" class="hidden">
-            <button id="btn-roll" class="btn-main hidden" style="background:var(--guide);">🎲 ทอยเหตุการณ์</button>
-            <table class="dashboard-table"><tbody id="gm-table-body"></tbody></table>
-            <button class="btn-main" id="btn-next" style="margin-top:20px;">ช่วงถัดไป ➡️</button>
-            <button class="btn-secondary" id="btn-end">จบเกม/เฉลย 🚩</button>
+        
+        <div id="event-display" class="hidden">
+            <div style="color:var(--guide); font-size:0.8em; text-transform:uppercase; margin-bottom:5px;">🎲 เหตุการณ์ประจำวัน</div>
+            <div id="event-text"></div>
         </div>
 
-        <div id="player-view" style="text-align:center; padding:20px;">
-            <h1 id="my-role" style="color:var(--v); font-size:2.5em; margin:10px 0;">...</h1>
-            <p id="my-desc" style="color:#aaa; font-size:0.9em;"></p>
-            <div id="my-status" style="margin-top:20px; font-weight:bold;"></div>
+        <div id="gm-view" class="hidden">
+            <button id="btn-roll" class="btn-main hidden" style="background:var(--guide); margin-bottom:15px;">🎲 ทอยเหตุการณ์</button>
+            <table class="dashboard-table"><tbody id="gm-table-body"></tbody></table>
+            <button class="btn-main" id="btn-next" style="margin-top:20px;">เปลี่ยนช่วงเวลา ➡️</button>
+            <button class="btn-secondary" id="btn-end" style="margin-top:10px;">🚩 จบเกมและเฉลย</button>
+        </div>
+
+        <div id="player-view" style="text-align:center; padding:30px 10px;">
+            <h1 id="my-role" style="color:var(--v); font-size:2.8em; margin:10px 0;">...</h1>
+            <p id="my-desc" style="color:#aaa; font-size:0.95em;"></p>
+            <div id="my-status" style="margin-top:25px; font-size:1.3em; font-weight:bold;"></div>
         </div>
     </div>
 
     <div id="screen-result" class="card hidden">
-        <h2 style="text-align:center;">🏁 ผลการแข่งขัน</h2>
+        <h2 style="text-align:center; color:var(--primary);">🏁 สรุปผล</h2>
         <div id="result-list"></div>
-        <button id="btn-gm-back" class="btn-main hidden" style="background:var(--guide);">กลับล็อบบี้</button>
+        <button id="btn-gm-back" class="btn-main hidden" style="background:var(--guide); margin-top:20px;">🔙 กลับล็อบบี้</button>
     </div>
 </div>
 
@@ -115,13 +125,25 @@
 
     const rolesData = [
         { id: 'v1', team: 'human', name: 'ชาวบ้าน', p: 1, desc: 'ไม่มีพลังพิเศษ' },
-        { id: 'v2', team: 'human', name: 'เทพพยากรณ์', p: 7, desc: 'ตรวจสอบคนอื่นได้คืนละ 1 ครั้ง' },
+        { id: 'v2', team: 'human', name: 'เทพพยากรณ์', p: 7, desc: 'เช็คหมาป่าได้คืนละ 1 คน' },
         { id: 'v4', team: 'human', name: 'กามเทพ', p: -3, desc: 'เลือกคู่รัก 2 คนในคืนแรก' },
-        { id: 'v5', team: 'human', name: 'บอดี้การ์ด', p: 3, desc: 'ปกป้องคนอื่นคืนละ 1 ครั้ง' },
+        { id: 'v5', team: 'human', name: 'บอดี้การ์ด', p: 3, desc: 'ปกป้องผู้เล่นคืนละ 1 คน' },
         { id: 'w1', team: 'wolf', name: 'หมาป่า', p: -6, desc: 'เลือกฆ่าคนในทุกๆ คืน' },
-        { id: 'o4', team: 'other', name: 'เจ้าลัทธิ', p: 1, desc: 'ชนะเมื่อทุกคนอยู่ลัทธิ' },
-        { id: 'drunk', team: 'other', name: 'ขี้เมา', p: 0, desc: 'คุณจำบทบาทจริงไม่ได้จนกว่าจะถึงเวลา' }
+        { id: 'o4', team: 'other', name: 'เจ้าลัทธิ', p: 1, desc: 'ล้างสมองผู้เล่นเพื่อชนะ' },
+        { id: 'drunk', team: 'other', name: 'ขี้เมา', p: 0, desc: 'คุณจำบทบาทจริงของตัวเองไม่ได้' }
     ];
+
+    const eventTable = {
+        2: "ความมืดครอบงำ: เหยื่อที่ถูกฆ่าจะกลายเป็นหมาป่า",
+        3: "เสียงสวรรค์: สุ่มตาย 2 คนทันที",
+        4: "เลือดนองหน้า: โหวตออกได้ 2 คน",
+        5: "นิมิตแห่งความจริง: GM เฉลยผลการตรวจของเทพพยากรณ์",
+        6: "ลมสงบ: ไม่มีเหตุการณ์", 7: "โชคชะตาเล่นตลก: ไม่มีเหตุการณ์", 8: "อากาศแจ่มใส: ไม่มีเหตุการณ์",
+        9: "เหตุการณ์ซ้ำรอย: ใช้เหตุการณ์ของเมื่อวาน",
+        10: "คำสาป GM: สั่งห้ามโหวต 2 คน",
+        11: "ความเงียบงัน: ห้ามพิมพ์/พูดคุยในวันนี้",
+        12: "สูญสิ้นพลัง: เหยื่อที่ไม่ตายจะเสียพลังถาวร"
+    };
 
     const app = initializeApp({ apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo", databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app" });
     const db = getDatabase(app);
@@ -129,7 +151,7 @@
 
     document.getElementById('btn-create').onclick = async () => {
         myName = document.getElementById('username').value.trim();
-        if(!myName) return alert("ใส่ชื่อด้วย");
+        if(!myName) return alert("กรุณาใส่ชื่อ");
         currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
         await set(ref(db, 'rooms/' + currentRoom), { status: 'waiting', gm: myName, players: {[myName]: true}, phase: 0 });
         initLobby();
@@ -158,7 +180,7 @@
             if(data.gm === myName) {
                 document.getElementById('gm-setup').classList.remove('hidden');
                 document.getElementById('wait-msg').classList.add('hidden');
-                document.getElementById('select-gm').innerHTML = '<option value="">-- เลือก GM ใหม่ --</option>' + players.map(p => `<option value="${p}">${p}</option>`).join('');
+                document.getElementById('select-gm').innerHTML = '<option value="">-- โอน GM --</option>' + players.map(p => `<option value="${p}">${p}</option>`).join('');
                 renderRoleSelector(data.lastSelected || {});
             } else {
                 document.getElementById('gm-setup').classList.add('hidden');
@@ -167,10 +189,16 @@
 
             if(data.status === 'playing') renderGame(data);
             else if(data.status === 'ended') renderResult(data);
+            else if(data.status === 'waiting') {
+                document.body.className = '';
+                document.getElementById('screen-game').classList.add('hidden');
+                document.getElementById('screen-result').classList.add('hidden');
+                document.getElementById('screen-lobby').classList.remove('hidden');
+            }
         });
     }
 
-    window.transferGM = (newGM) => { if(newGM && confirm(`โอนสิทธิ์ GM ให้ ${newGM}?`)) update(ref(db, 'rooms/' + currentRoom), { gm: newGM }); };
+    window.transferGM = (newGM) => { if(newGM && confirm(`โอน GM ให้ ${newGM}?`)) update(ref(db, 'rooms/' + currentRoom), { gm: newGM }); };
 
     function renderRoleSelector(saved) {
         const container = document.getElementById('role-selector');
@@ -202,13 +230,14 @@
             s += (selectedQty[id] * (rolesData.find(r => r.id === id).p || 0));
         }
         document.getElementById('count-sel').innerText = t;
+        document.getElementById('count-sel').style.color = (t === players.length) ? 'var(--v)' : 'var(--w)';
         document.getElementById('balance-score').innerText = `แต้มสมดุล: ${s}`;
     }
 
     document.getElementById('btn-start-game').onclick = () => {
         let pool = [];
         for(let id in selectedQty) if(id !== 'drunk') for(let i=0; i<selectedQty[id]; i++) pool.push(rolesData.find(r => r.id === id));
-        if(pool.length !== players.length) return alert("จำนวนบทบาทไม่เท่ากับผู้เล่น!");
+        if(pool.length !== players.length) return alert("บทบาทไม่ครบตามจำนวนคน!");
 
         let shuffled = pool.sort(() => Math.random() - 0.5);
         let gameData = {};
@@ -218,12 +247,12 @@
 
         if(selectedQty['drunk'] > 0) {
             let pNames = [...players].sort(() => Math.random() - 0.5);
-            for(let i=0; i < Math.min(selectedQty['drunk'], players.length); i++) {
+            for(let i=0; i<Math.min(selectedQty['drunk'], players.length); i++) {
                 gameData[pNames[i]].isDrunk = true;
                 gameData[pNames[i]].displayRole = "ขี้เมา";
             }
         }
-        update(ref(db, 'rooms/' + currentRoom), { status: 'playing', gameData, phase: 0, lastSelected: selectedQty, currentEvent: null });
+        update(ref(db, 'rooms/' + currentRoom), { status: 'playing', gameData, phase: 0, lastSelected: selectedQty, currentEvent: null, isRolling: false });
     };
 
     function renderGame(data) {
@@ -235,8 +264,9 @@
         document.getElementById('phase-label').style.background = phases[data.phase].b;
 
         const evDisplay = document.getElementById('event-display');
-        if(data.isRolling) { evDisplay.classList.remove('hidden'); document.getElementById('event-text').className='rolling'; document.getElementById('event-text').innerText='🎲 กำลังทอย...'; }
-        else if(data.currentEvent) { evDisplay.classList.remove('hidden'); document.getElementById('event-text').className=''; document.getElementById('event-text').innerText='เหตุการณ์: ' + data.currentEvent; }
+        const evText = document.getElementById('event-text');
+        if(data.isRolling) { evDisplay.classList.remove('hidden'); evText.innerHTML = `<span class="rolling">🎲 กำลังทอยลูกเต๋า...</span>`; }
+        else if(data.currentEvent) { evDisplay.classList.remove('hidden'); evText.innerText = eventTable[data.currentEvent] || "ปกติ"; }
         else evDisplay.classList.add('hidden');
 
         if(data.gm === myName) {
@@ -250,22 +280,28 @@
             document.getElementById('player-view').classList.remove('hidden');
             const info = data.gameData[myName];
             document.getElementById('my-role').innerText = info.displayRole;
-            document.getElementById('my-desc').innerText = info.displayRole === "ขี้เมา" ? "คุณจำบทบาทจริงไม่ได้" : info.realDesc;
+            document.getElementById('my-desc').innerText = info.displayRole === "ขี้เมา" ? "คุณลืมบทบาทจริงของตัวเอง" : info.realDesc;
             document.getElementById('my-status').innerText = info.status === 'normal' ? '🟢 มีชีวิต' : '💀 ตาย';
+            document.getElementById('my-status').style.color = info.status === 'normal' ? 'var(--v)' : 'var(--w)';
         }
     }
 
     function renderGMTable(data) {
         document.getElementById('gm-table-body').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
-            <tr>
-                <td><b>${p}</b> ${info.isDrunk?'<span class="drunk-label">(ขี้เมา)</span>':''}<br>
-                    <span>${info.isEyeOpen ? info.realRole : info.displayRole}</span> 
-                    ${info.isDrunk ? `<button class="btn-eye" onclick="window.toggleEye('${p}', ${!info.isEyeOpen})">👁️</button>` : ''}
+            <tr class="tr-${info.status}">
+                <td>
+                    <b>${p}</b> ${info.isDrunk ? '<span class="drunk-badge">(ขี้เมา)</span>' : ''}
+                    <div style="font-size:0.9em; color:#fff;">
+                        ${info.isEyeOpen ? info.realRole : info.displayRole}
+                        ${info.isDrunk ? `<button class="btn-eye" onclick="window.toggleEye('${p}', ${!info.isEyeOpen})">👁️</button>` : ''}
+                    </div>
                 </td>
-                <td><select onchange="window.updSt('${p}', this.value)">
-                    <option value="normal" ${info.status==='normal'?'selected':''}>ปกติ</option>
-                    <option value="dead" ${info.status==='dead'?'selected':''}>ตาย</option>
-                </select></td>
+                <td>
+                    <select onchange="window.updSt('${p}', this.value)">
+                        <option value="normal" ${info.status==='normal'?'selected':''}>มีชีวิต</option>
+                        <option value="dead" ${info.status==='dead'?'selected':''}>ตาย</option>
+                    </select>
+                </td>
             </tr>`).join('');
     }
 
@@ -283,14 +319,19 @@
         }, { onlyOnce: true });
     };
 
+    document.getElementById('btn-end').onclick = () => { if(confirm("จบเกมและเฉลย?")) update(ref(db, `rooms/${currentRoom}`), { status: 'ended' }); };
+
     function renderResult(data) {
         document.getElementById('screen-game').classList.add('hidden');
         document.getElementById('screen-result').classList.remove('hidden');
-        document.getElementById('result-list').innerHTML = Object.entries(data.gameData).map(([p, info]) => `<div>${p}: ${info.realRole}</div>`).join('');
+        document.getElementById('result-list').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
+            <div style="padding:10px; border-bottom:1px solid #333;">
+                <b>${p}</b>: ${info.realRole} ${info.isDrunk ? '(ขี้เมา)' : ''} 
+                - <span style="color:${info.status==='normal'?'var(--v)':'var(--w)'}">${info.status==='normal'?'รอด':'ตาย'}</span>
+            </div>`).join('');
         if(data.gm === myName) document.getElementById('btn-gm-back').classList.remove('hidden');
     }
 
-    document.getElementById('btn-end').onclick = () => update(ref(db, `rooms/${currentRoom}`), { status: 'ended' });
     document.getElementById('btn-gm-back').onclick = () => update(ref(db, `rooms/${currentRoom}`), { status: 'waiting' });
 </script>
 </body>
