@@ -163,7 +163,7 @@ document.getElementById('btn-start-game').onclick = () => {
         gameData[p] = {
             role:          isDrunk ? 'ขี้เมา'    : shuffled[i].name,
             en:            isDrunk ? 'Drunk'      : shuffled[i].en,
-            desc:          isDrunk ? 'คุณเมาและไม่รู้บทบาทที่แท้จริงของตัวเอง! รอ GM เปิดเผย...' : shuffled[i].desc,
+            desc:          isDrunk ? 'เป็นขี้เมาในสองคืนแรก คืนที่สามจะรู้ว่าที่จริงแล้วเป็นอะไร (อาจจะเป็นประธานบริษัท)' : shuffled[i].desc,
             status:        'normal',
             isLinked:      false,
             inCult:        false,
