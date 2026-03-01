@@ -11,7 +11,6 @@
             --v: #4ecca3; --w: #ff4b2b; --mute: #f39c12;
             --exile: #7f8c8d; --cupid: #ff69b4; --guide: #00adb5; --cult: #b06ab3;
         }
-
         body { font-family: 'Kanit', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; padding: 10px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 600px; }
         .card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 15px; position: relative; }
@@ -44,14 +43,10 @@
         .tr-exiled { background: rgba(127, 140, 141, 0.2) !important; }
         .tr-couple { outline: 2px solid var(--cupid); outline-offset: -2px; }
         .tr-cult { border-left: 5px solid var(--cult) !important; background: rgba(176, 106, 179, 0.1); }
-
         .name-dead { text-decoration: line-through; color: var(--w); opacity: 0.7; }
         .btn-action { padding: 8px; border-radius: 6px; font-size: 1em; width: auto; min-width: 40px; margin: 2px; border: none; cursor: pointer; color: white; }
 
-        /* Result Styles */
         .result-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #333; align-items: center; }
-        .res-role { font-size: 0.85em; color: var(--guide); }
-        .res-status { font-weight: bold; }
     </style>
 </head>
 <body>
@@ -171,7 +166,7 @@
         { id: 'o6', team: 'other', name: 'ฆาตกรต่อเนื่อง', en: 'Serial Killer', p: -8, desc: 'ตื่นมาฆ่าคนได้ทุกคืน และต้องเหลือรอดเป็นคนสุดท้ายเพื่อชนะ' }
     ];
 
-    const eventTable = { 2:"เป้าหมายหมาป่ากลายเป็นหมาป่าใหม่", 3:"กำจัด 2 คนไม่ต้องโหวต", 4:"กำจัด 2 คนวันนี้", 5:"เฉลย Seer เช็คใคร", 6:"ปกติ", 7:"ปกติ", 8:"ปกติ", 9:"เหตุการณ์เดิม", 10:"GM ตัดตัวเลือก", 11:"ห้ามพูด", 12:"เหยื่อไม่ตายแต่เสียพลัง" };
+    const eventTable = { 2:"เหยื่อกลายเป็นหมาป่า", 3:"กำจัด 2 คนไม่ต้องโหวต", 4:"กำจัด 2 คนวันนี้", 5:"เฉลย Seer เช็คใคร", 6:"ปกติ", 7:"ปกติ", 8:"ปกติ", 9:"เหตุการณ์เดิม", 10:"GM ตัดตัวเลือก", 11:"ห้ามพูด", 12:"เหยื่อเสียพลังถาวร" };
 
     const app = initializeApp({ apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo", databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app" });
     const db = getDatabase(app);
@@ -179,7 +174,7 @@
 
     document.getElementById('btn-create').onclick = async () => {
         myName = document.getElementById('username').value.trim();
-        if(!myName) return alert("ใส่ชื่อด้วยครับ");
+        if(!myName) return;
         currentRoom = Math.floor(1000 + Math.random() * 9000).toString();
         await set(ref(db, 'rooms/' + currentRoom), { status: 'waiting', gm: myName, players: {[myName]: true}, phase: 0 });
         initLobby();
@@ -188,7 +183,7 @@
     document.getElementById('btn-join').onclick = async () => {
         myName = document.getElementById('username').value.trim();
         currentRoom = document.getElementById('room-code').value.trim();
-        if(!myName || !currentRoom) return alert("ข้อมูลไม่ครบ");
+        if(!myName || !currentRoom) return;
         await update(ref(db, `rooms/${currentRoom}/players`), {[myName]: true});
         initLobby();
     };
@@ -202,6 +197,7 @@
             const data = snap.val(); if(!data) return;
             const all = Object.keys(data.players || {});
             players = all.filter(n => n !== data.gm);
+            // แสดงชื่อทุกคนรวมถึง GM
             document.getElementById('player-list').innerHTML = all.map(p => `<div class="player-badge">${p}${p===data.gm?'<span class="gm-badge">GM</span>':''}</div>`).join('');
             document.getElementById('count-total').innerText = players.length;
 
@@ -210,14 +206,12 @@
                 document.getElementById('wait-msg').classList.add('hidden');
                 renderRoleSelector(data.lastSelected || {});
             }
-
-            // จัดการหน้าจอตามสถานะ Status
             if(data.status === 'playing') renderGame(data);
             else if(data.status === 'ended') renderResult(data);
-            else if(data.status === 'waiting') { 
-                document.getElementById('screen-game').classList.add('hidden'); 
+            else if(data.status === 'waiting') {
+                document.getElementById('screen-game').classList.add('hidden');
                 document.getElementById('screen-result').classList.add('hidden');
-                document.getElementById('screen-lobby').classList.remove('hidden'); 
+                document.getElementById('screen-lobby').classList.remove('hidden');
             }
         });
     }
@@ -232,7 +226,7 @@
             container.appendChild(h);
             rolesData.filter(r => r.team === g.id).forEach(r => {
                 const div = document.createElement('div'); div.className = 'role-item';
-                div.innerHTML = `<div><b>${r.name}</b><br><small>${r.p} แต้ม</small></div>
+                div.innerHTML = `<div><b>${r.name}</b> <small>(${r.en})</small><br><span style="font-size:0.8em; color:${r.p<0?'var(--w)':'var(--v)'}">${r.p>0?'+'+r.p:r.p} แต้ม</span></div>
                     <div class="qty-controls">
                         <button class="btn-qty" onclick="window.changeQty('${r.id}', -1)">-</button>
                         <b id="qty-${r.id}" class="qty-num">${selectedQty[r.id] || 0}</b>
@@ -255,13 +249,15 @@
         for(let id in selectedQty) { t += selectedQty[id]; s += (selectedQty[id] * rolesData.find(r => r.id === id).p); }
         document.getElementById('count-sel').innerText = t;
         document.getElementById('count-sel').style.color = (t === players.length) ? 'var(--v)' : 'var(--w)';
-        document.getElementById('balance-score').innerText = `แต้มสมดุล: ${s}`;
+        const bScore = document.getElementById('balance-score');
+        bScore.innerText = `แต้มสมดุล: ${s}`;
+        bScore.style.color = s < 0 ? 'var(--w)' : 'var(--v)';
     }
 
     document.getElementById('btn-start-game').onclick = () => {
         let final = [];
         for(let id in selectedQty) for(let i=0; i<selectedQty[id]; i++) final.push(rolesData.find(r => r.id === id));
-        if(final.length !== players.length) return alert(`บทบาทไม่ตรงกับผู้เล่น`);
+        if(final.length !== players.length) return alert(`จำนวนบทบาทไม่ตรงกับผู้เล่น!`);
         let shuffled = final.sort(() => Math.random() - 0.5);
         let gameData = {};
         players.forEach((p, i) => { gameData[p] = { role: shuffled[i].name, en: shuffled[i].en, desc: shuffled[i].desc, status: 'normal', isLinked: false, inCult: false }; });
@@ -271,11 +267,9 @@
     function renderGame(data) {
         document.getElementById('screen-lobby').classList.add('hidden');
         document.getElementById('screen-game').classList.remove('hidden');
-        document.getElementById('screen-result').classList.add('hidden');
         const phases = [{n:"คืนมืดมิด 🌙", b:"#1e3799"}, {n:"เช้าวันใหม่ ☀️", b:"#f39c12"}, {n:"เวลาโหวต ⚖️", b:"#e74c3c"}];
         document.getElementById('phase-label').innerText = phases[data.phase].n;
         document.getElementById('phase-label').style.background = phases[data.phase].b;
-
         if(data.gm === myName) {
             document.getElementById('gm-view').classList.remove('hidden');
             document.getElementById('player-view').classList.add('hidden');
@@ -283,7 +277,7 @@
             renderGMTable(data);
         } else {
             const info = data.gameData[myName];
-            document.getElementById('my-role').innerText = `${info.role}`;
+            document.getElementById('my-role').innerText = info.role;
             document.getElementById('my-desc').innerText = info.desc;
             const stMap = { dead: "💀 ตายแล้ว", muted: "🤫 ถูกใบ้", exiled: "⚖️ ถูกเนรเทศ", normal: "🟢 ยังมีชีวิต" };
             document.getElementById('my-status').innerText = stMap[info.status];
@@ -293,7 +287,7 @@
     function renderGMTable(data) {
         document.getElementById('gm-table-body').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
             <tr class="tr-${info.status} ${info.isLinked?'tr-couple':''} ${info.inCult?'tr-cult':''}">
-                <td>${p}<br><small>${info.role}</small></td>
+                <td><span class="name-${info.status}">${p}</span><br><small>${info.role}</small></td>
                 <td><select onchange="window.updSt('${p}', this.value)">
                     <option value="normal" ${info.status==='normal'?'selected':''}>ปกติ</option>
                     <option value="dead" ${info.status==='dead'?'selected':''}>ตาย</option>
@@ -307,10 +301,9 @@
             </tr>`).join('');
     }
 
-    // --- ตรรกะคู่ชีวิต: ตายคู่/ฟื้นคู่ ---
     window.updSt = (p, s) => {
         onValue(ref(db, `rooms/${currentRoom}`), (snap) => {
-            const data = snap.val(); if(!data) return;
+            const data = snap.val();
             const updates = {};
             if(data.gameData[p].isLinked && (s === 'normal' || s === 'dead')) {
                 Object.keys(data.gameData).forEach(k => { if(data.gameData[k].isLinked) updates[`gameData/${k}/status`] = s; });
@@ -319,51 +312,23 @@
         }, { onlyOnce: true });
     };
 
-    window.updEx = (p, key, val) => update(ref(db, `rooms/${currentRoom}/gameData/${p}`), { [key]: val });
+    window.updEx = (p, k, v) => update(ref(db, `rooms/${currentRoom}/gameData/${p}`), { [k]: v });
 
-    // --- หน้าสรุปผล ---
     function renderResult(data) {
         document.getElementById('screen-game').classList.add('hidden');
         document.getElementById('screen-result').classList.remove('hidden');
-        const list = document.getElementById('result-list');
-        list.innerHTML = Object.entries(data.gameData).map(([p, info]) => `
+        document.getElementById('result-list').innerHTML = Object.entries(data.gameData).map(([p, info]) => `
             <div class="result-item">
-                <div>
-                    <span style="font-size:1.1em; font-weight:bold;">${p}</span><br>
-                    <span class="res-role">บทบาท: ${info.role}</span>
-                </div>
-                <div class="res-status" style="color:${info.status==='normal'?'var(--v)':'var(--w)'}">
-                    ${info.status === 'normal' ? 'รอดชีวิต ✅' : 'ตายแล้ว 💀'}
-                </div>
-            </div>
-        `).join('');
-
-        if(data.gm === myName) {
-            document.getElementById('btn-gm-back').classList.remove('hidden');
-            document.getElementById('player-end-msg').classList.add('hidden');
-        } else {
-            document.getElementById('btn-gm-back').classList.add('hidden');
-            document.getElementById('player-end-msg').classList.remove('hidden');
-        }
+                <div><b>${p}</b><br><small style="color:var(--guide)">${info.role}</small></div>
+                <div style="color:${info.status==='normal'?'var(--v)':'var(--w)'}">${info.status==='normal'?'รอด ✅':'ตาย 💀'}</div>
+            </div>`).join('');
+        if(data.gm === myName) document.getElementById('btn-gm-back').classList.remove('hidden');
     }
 
+    document.getElementById('btn-end').onclick = () => { if(confirm("เฉลยบทบาทและจบเกม?")) update(ref(db, `rooms/${currentRoom}`), { status: 'ended' }); };
+    document.getElementById('btn-gm-back').onclick = () => update(ref(db, `rooms/${currentRoom}`), { status: 'waiting' });
     document.getElementById('btn-next').onclick = () => {
         onValue(ref(db, `rooms/${currentRoom}/phase`), (s) => { update(ref(db, `rooms/${currentRoom}`), { phase: (s.val() + 1) % 3 }); }, { onlyOnce: true });
-    };
-
-    document.getElementById('btn-end').onclick = () => { if(confirm("ต้องการจบเกมและเฉลยบทบาทหรือไม่?")) update(ref(db, `rooms/${currentRoom}`), { status: 'ended' }); };
-    
-    // GM รีเซ็ตห้องกลับไป Lobby
-    document.getElementById('btn-gm-back').onclick = () => {
-        update(ref(db, `rooms/${currentRoom}`), { status: 'waiting', currentEvent: 0 });
-    };
-
-    document.getElementById('btn-roll').onclick = () => {
-        update(ref(db, `rooms/${currentRoom}`), { eventRolling: true });
-        setTimeout(() => {
-            const res = (Math.floor(Math.random()*6)+1) + (Math.floor(Math.random()*6)+1);
-            update(ref(db, `rooms/${currentRoom}`), { currentEvent: res, eventRolling: false });
-        }, 1500);
     };
 </script>
 </body>
