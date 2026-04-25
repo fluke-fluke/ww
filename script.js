@@ -4,7 +4,7 @@ import { rolesData, eventTable } from "./roles.js";
 
 const app = initializeApp({
     apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo",
-    databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app"
+    databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app/"
 });
 const db = getDatabase(app);
 
